@@ -56,6 +56,15 @@ export function usePersist<T>(
   return [val, setVal];
 }
 
+/**
+ * Bump whenever the seed data changes shape or content.
+ *
+ * Persisted values win over the seeds, so without this a browser that has
+ * already run the app would keep showing the old records forever.
+ */
+export const DATA_VERSION = "2";
+const VERSION_KEY = "pethub_data_version";
+
 export const STORAGE_KEYS = {
   auth: "pethub_auth",
   user: "pethub_user",
@@ -69,3 +78,30 @@ export const STORAGE_KEYS = {
   appointments: "pethub_appointments",
   transactions: "pethub_transactions",
 } as const;
+
+/** Keys holding the signed-in session rather than records. */
+const SESSION_KEYS: string[] = [STORAGE_KEYS.auth, STORAGE_KEYS.user];
+
+/**
+ * Clears stored records when the app ships new seed data, so everyone starts
+ * from the same place instead of keeping whatever their browser cached. The
+ * signed-in session survives, so nobody is logged out by an update.
+ */
+export function resetStaleData(): void {
+  try {
+    if (localStorage.getItem(VERSION_KEY) === DATA_VERSION) return;
+
+    Object.keys(localStorage)
+      .filter(
+        (k) =>
+          k.startsWith("pethub_") &&
+          k !== VERSION_KEY &&
+          !SESSION_KEYS.includes(k),
+      )
+      .forEach((k) => localStorage.removeItem(k));
+
+    localStorage.setItem(VERSION_KEY, DATA_VERSION);
+  } catch {
+    /* storage unavailable — nothing to migrate */
+  }
+}
