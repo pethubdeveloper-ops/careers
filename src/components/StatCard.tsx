@@ -1,45 +1,6 @@
-import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
+import { useCountUp } from "@/lib/useCountUp";
 import { T, css } from "@/theme";
-
-/**
- * Animates a numeric display from 0 to its target on change.
- * Non-numeric values pass straight through.
- */
-export function useCountUp(target: string | number): string | number {
-  const [val, setVal] = useState<string | number>(target);
-  const prev = useRef<string | null>(null);
-
-  useEffect(() => {
-    const str = String(target);
-    const num = parseFloat(str.replace(/[^0-9.]/g, ""));
-
-    if (isNaN(num) || prev.current === str) {
-      setVal(target);
-      return;
-    }
-    prev.current = str;
-
-    const prefix = str.match(/^[^0-9]*/)?.[0] ?? "";
-    const hasComma = str.includes(",") || num >= 1000;
-    const t0 = performance.now();
-    const dur = 700;
-    let raf = 0;
-
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / dur);
-      const e = 1 - Math.pow(1 - p, 3);
-      const n = Math.round(num * e);
-      setVal(prefix + (hasComma ? n.toLocaleString() : n));
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target]);
-
-  return val;
-}
 
 export function StatCard({
   label,

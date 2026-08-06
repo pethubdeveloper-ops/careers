@@ -5,6 +5,18 @@ import { Icon, Icons, PageHeader, Toast } from "@/components";
 import { T, css } from "@/theme";
 import type { Branch, Db } from "@/types";
 
+/**
+ * Leaflet popups take an HTML string, and branch fields are admin-editable —
+ * escape anything interpolated into them.
+ */
+const esc = (v: string) =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const googleMapsUrl = (b: Branch) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     `${b.name}, ${b.location || ""}`.trim(),
@@ -22,11 +34,8 @@ function BranchMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapObj = useRef<L.Map | null>(null);
   const markers = useRef<Record<number, L.Marker>>({});
-  // Read inside the mount effect without making it a dependency — the map is
-  // built once and panned imperatively afterwards.
-  const branchesRef = useRef(branches);
-  branchesRef.current = branches;
 
+  // Create the map once. Markers are synced separately so branch edits show up.
   useEffect(() => {
     if (!mapRef.current || mapObj.current) return;
 
@@ -41,6 +50,21 @@ function BranchMap({
       maxZoom: 19,
     }).addTo(map);
 
+    return () => {
+      map.remove();
+      mapObj.current = null;
+      markers.current = {};
+    };
+  }, []);
+
+  // Rebuild markers whenever the branch list changes.
+  useEffect(() => {
+    const map = mapObj.current;
+    if (!map) return;
+
+    Object.values(markers.current).forEach((m) => m.remove());
+    markers.current = {};
+
     const icon = L.divIcon({
       className: "",
       html: `<div style="width:42px;height:42px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35);background:#fff;display:flex;align-items:center;justify-content:center;">
@@ -52,31 +76,24 @@ function BranchMap({
       popupAnchor: [0, -54],
     });
 
-    branchesRef.current.forEach((b) => {
+    branches.forEach((b) => {
       if (!b.lat || !b.lng) return;
       const marker = L.marker([b.lat, b.lng], { icon })
         .addTo(map)
         .bindPopup(
           `<div style="font-family:Inter,sans-serif;min-width:200px">
-              <p style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:4px">${b.name}</p>
-              <p style="font-size:11.5px;color:#64748b;margin-bottom:3px">📍 ${b.location}</p>
-              ${b.phone ? `<p style="font-size:11.5px;color:#64748b">📞 ${b.phone}</p>` : ""}
-              ${b.email ? `<p style="font-size:11.5px;color:#10b981">${b.email}</p>` : ""}
-              <a href="${googleMapsUrl(b)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:7px;font-size:11.5px;font-weight:700;color:#fff;background:#10b981;border-radius:7px;padding:5px 10px;text-decoration:none">Open in Google Maps ↗</a>
+              <p style="font-weight:700;font-size:13px;color:#0f172a;margin-bottom:4px">${esc(b.name)}</p>
+              <p style="font-size:11.5px;color:#64748b;margin-bottom:3px">📍 ${esc(b.location)}</p>
+              ${b.phone ? `<p style="font-size:11.5px;color:#64748b">📞 ${esc(b.phone)}</p>` : ""}
+              ${b.email ? `<p style="font-size:11.5px;color:#10b981">${esc(b.email)}</p>` : ""}
+              <a href="${esc(googleMapsUrl(b))}" target="_blank" rel="noopener" style="display:inline-block;margin-top:7px;font-size:11.5px;font-weight:700;color:#fff;background:#10b981;border-radius:7px;padding:5px 10px;text-decoration:none">Open in Google Maps ↗</a>
             </div>`,
           { maxWidth: 260 },
         );
       marker.on("click", () => onSelect(b.id));
       markers.current[b.id] = marker;
     });
-
-    return () => {
-      map.remove();
-      mapObj.current = null;
-      markers.current = {};
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [branches, onSelect]);
 
   useEffect(() => {
     if (!mapObj.current || !selectedId) return;

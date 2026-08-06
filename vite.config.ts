@@ -9,4 +9,17 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Keep the map and QR libraries out of the app chunk — they change far
+        // less often than application code, so they cache independently.
+        manualChunks: {
+          react: ["react", "react-dom"],
+          leaflet: ["leaflet"],
+          qrcode: ["qrcode"],
+        },
+      },
+    },
+  },
 });

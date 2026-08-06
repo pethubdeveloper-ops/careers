@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from "react";
-import { Icon, Icons } from "./Icon";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Icon } from "./Icon";
+import { Icons } from "./icons";
 import { T, css } from "@/theme";
 
 export function Field({
@@ -139,11 +140,17 @@ export function Badge({
 }
 
 export function Toast({ msg, onDone }: { msg: string; onDone: () => void }) {
+  // The toast owns a single 2.5s lifetime from mount, but callers pass a fresh
+  // arrow each render — keep the latest in a ref so the timer never restarts
+  // and never fires a stale callback.
+  const onDoneRef = useRef(onDone);
   useEffect(() => {
-    const t = setTimeout(onDone, 2500);
+    onDoneRef.current = onDone;
+  });
+
+  useEffect(() => {
+    const t = setTimeout(() => onDoneRef.current(), 2500);
     return () => clearTimeout(t);
-    // Fire-and-forget: the toast owns a single 2.5s lifetime from mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

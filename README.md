@@ -18,6 +18,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # typecheck + production bundle
 npm run typecheck  # tsc --noEmit
+npm run lint       # eslint (typescript-eslint + react-hooks)
 ```
 
 Sign in with **`admin@pethub.ph`** and any password to reach the admin portal, or

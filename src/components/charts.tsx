@@ -17,13 +17,15 @@ export function DonutChart({ segments }: { segments: DonutSegment[] }) {
     circ = 2 * Math.PI * r;
 
   const total = segments.reduce((s, sg) => s + sg.value, 0);
+  const fraction = (v: number) => (total ? v / total : 0);
 
-  let offset = 0;
-  const arcs = segments.map((sg) => {
-    const pct = total ? sg.value / total : 0;
-    const arc = { ...sg, pct, offset, dash: pct * circ, gap: (1 - pct) * circ };
-    offset += pct * circ;
-    return arc;
+  // Each arc starts where every preceding arc left off.
+  const arcs = segments.map((sg, i) => {
+    const pct = fraction(sg.value);
+    const offset =
+      segments.slice(0, i).reduce((s, prev) => s + fraction(prev.value), 0) *
+      circ;
+    return { ...sg, pct, offset, dash: pct * circ, gap: (1 - pct) * circ };
   });
 
   return (

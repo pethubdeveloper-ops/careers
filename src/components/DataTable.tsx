@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Icon, Icons } from "./Icon";
+import { Icon } from "./Icon";
+import { Icons } from "./icons";
 import { T, css } from "@/theme";
 
 export interface Column<Row> {
