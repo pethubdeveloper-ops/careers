@@ -19,7 +19,28 @@ npm run dev        # http://localhost:5173
 npm run build      # typecheck + production bundle
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint (typescript-eslint + react-hooks)
+npm test           # vitest
 ```
+
+## Tests
+
+`npm test` runs 57 tests across the rules that are easy to get wrong:
+
+- **`src/lib/loyalty.test.ts`** — expiry maths, including the boundaries: a card
+  lapsing today counts as expired (not near-expiring), 60 days is inside the
+  near-expiring window and 61 is outside.
+- **`src/lib/branch.test.ts`**, **`files.test.ts`** — the two branch-name
+  shortenings and peso rounding.
+- **`src/pages/LoginScreen.test.tsx`** — every auth outcome: staff, client,
+  pending, denied, approved, unknown, plus the registration guards.
+- **`src/pages/TransactionScanner.test.tsx`** — lookup by membership number and
+  name, ₱300 = 1pt with flooring, and the over-redemption block.
+- **`src/pages/CardRequestsPage.test.tsx`** — the avail → release → printed
+  handoff, decline, and branch filtering.
+
+Component tests use `renderWithDb` (`src/test/harness.tsx`), which holds the
+`db` bag in real React state, so they exercise the same write-then-rerender path
+as the app instead of asserting on spies.
 
 Sign in with **`admin@pethub.ph`** and any password to reach the admin portal, or
 with any seeded client email (e.g. `janjan00x@gmail.com`) to reach the client
