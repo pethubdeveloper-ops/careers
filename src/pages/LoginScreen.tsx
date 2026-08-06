@@ -271,17 +271,17 @@ export function LoginScreen({
               width: 50,
               height: 50,
               borderRadius: 14,
-              background: "linear-gradient(135deg,#0f6b4a,#073d2b)",
+              background: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               padding: 5,
               boxShadow: "0 4px 16px rgba(0,0,0,.35)",
-              border: "1px solid rgba(212,175,55,.4)",
+              border: "1px solid rgba(255,255,255,.6)",
             }}
           >
             <img
-              src="/logo-gold.png"
+              src="/logo.png"
               alt="Pet Hub"
               style={{ width: "100%", height: "100%", objectFit: "contain" }}
             />

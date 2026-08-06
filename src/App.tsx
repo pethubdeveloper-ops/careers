@@ -268,17 +268,19 @@ export default function App() {
           }}
         >
           <img
-            src="/logo-gold.png"
+            src="/logo.png"
             alt="Pet Hub Logo"
             style={{
               width: collapsed ? 40 : 46,
               height: collapsed ? 40 : 46,
               borderRadius: "50%",
               objectFit: "contain",
-              background: "linear-gradient(135deg,#0f6b4a,#073d2b)",
+              // The brand mark is drawn for light grounds — its darker green
+              // would sink into the sidebar without this.
+              background: "#fff",
               padding: 5,
               flexShrink: 0,
-              border: "1px solid rgba(212,175,55,.4)",
+              border: "1px solid rgba(255,255,255,.55)",
               transition: "all .2s",
             }}
           />

@@ -68,7 +68,7 @@ function BranchMap({
     const icon = L.divIcon({
       className: "",
       html: `<div style="width:42px;height:42px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.35);background:#fff;display:flex;align-items:center;justify-content:center;">
-          <img src="/logo-gold.png" style="width:36px;height:36px;object-fit:contain;border-radius:50%;"/>
+          <img src="/logo.png" style="width:36px;height:36px;object-fit:contain;border-radius:50%;"/>
         </div>
         <div style="width:14px;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid #fff;margin:-1px auto 0;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));"></div>`,
       iconSize: [42, 52],

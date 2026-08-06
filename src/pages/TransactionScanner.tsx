@@ -723,7 +723,7 @@ export function TransactionScanner({ db }: { db: Db }) {
                             }}
                           />
                           <img
-                            src="/logo-gold.png"
+                            src="/logo.png"
                             alt=""
                             style={{
                               position: "absolute",
@@ -732,7 +732,9 @@ export function TransactionScanner({ db }: { db: Db }) {
                               width: 104,
                               height: 104,
                               objectFit: "contain",
-                              opacity: 0.22,
+                              // Green-on-green needs more presence than the
+                              // gold mark did to read as a watermark.
+                              opacity: 0.38,
                             }}
                           />
                           <div
