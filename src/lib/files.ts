@@ -104,14 +104,67 @@ export function dataUrlToBlob(dataUrl: string): Blob {
 }
 
 /**
- * Saves a stored data URL to disk.
+ * A host that saves files on the page's behalf.
+ *
+ * The shared demo runs inside the claude.ai artifact viewer, which frames the
+ * page with a sandbox that forbids downloads — a link click there is dropped
+ * without a word. That viewer hands the page a save prompt instead. Nothing
+ * else provides this, so the real app never takes the branch.
+ */
+interface SaveHost {
+  save(request: { filename: string; data: Blob }): Promise<unknown>;
+}
+
+function saveHost(): SaveHost | undefined {
+  return (window as Window & { claude?: { downloads?: SaveHost } }).claude
+    ?.downloads;
+}
+
+/** Turns a host rejection into something worth showing a member of staff. */
+function saveHostMessage(err: unknown): string | null {
+  const code = (err as { code?: string })?.code;
+  switch (code) {
+    case "declined":
+      // The viewer said no. That is an answer, not a failure.
+      return null;
+    case "rejected_extension":
+    case "extension_not_enabled":
+      return "The shared preview can only save images. Run the app to save this file.";
+    case "too_large":
+      return "That file is too large to save from the shared preview.";
+    case "rate_limited":
+      return "A save is already in progress — try again in a moment.";
+    default:
+      return "Could not save the file.";
+  }
+}
+
+/**
+ * Saves a stored data URL to disk. Resolves once the file is on its way, and
+ * rejects with a message fit to show when it could not be saved.
  *
  * Goes via a Blob rather than putting the data URL straight on the link:
  * browsers cap and in places refuse very long data: URLs, and an object URL
  * downloads reliably at any size.
  */
-export function downloadDataUrl(dataUrl: string, filename: string): void {
-  const url = URL.createObjectURL(dataUrlToBlob(dataUrl));
+export async function downloadDataUrl(
+  dataUrl: string,
+  filename: string,
+): Promise<void> {
+  const blob = dataUrlToBlob(dataUrl);
+
+  const host = saveHost();
+  if (host) {
+    try {
+      await host.save({ filename, data: blob });
+    } catch (err) {
+      const message = saveHostMessage(err);
+      if (message) throw new Error(message);
+    }
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;

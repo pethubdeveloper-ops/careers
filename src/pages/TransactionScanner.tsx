@@ -259,8 +259,10 @@ export function TransactionScanner({ db }: { db: Db }) {
       downloadDataUrl(
         cv.toDataURL("image/png"),
         `VIP-LoyaltyCard-${(p.name || "pet").replace(/\s+/g, "-")}.png`,
+      ).then(
+        () => setToast("VIP loyalty card downloaded."),
+        (err: Error) => setToast(err.message),
       );
-      setToast("VIP loyalty card downloaded.");
     };
 
     if (p.photo) {

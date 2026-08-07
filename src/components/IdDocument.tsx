@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Icon } from "./Icon";
 import { Icons } from "./icons";
 import { Modal } from "./primitives";
@@ -133,6 +133,16 @@ export function IdViewerModal({
   onClose: () => void;
   actions?: ReactNode;
 }) {
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  function save() {
+    if (!doc.idImage) return;
+    setSaveError(null);
+    downloadDataUrl(doc.idImage, idFilename(doc)).catch((err: Error) =>
+      setSaveError(err.message),
+    );
+  }
+
   return (
     <Modal title={`ID — ${doc.name}`} onClose={onClose} width={560}>
       {subtitle && (
@@ -170,7 +180,7 @@ export function IdViewerModal({
 
       <button
         type="button"
-        onClick={() => doc.idImage && downloadDataUrl(doc.idImage, idFilename(doc))}
+        onClick={save}
         style={{
           ...css.btnSecondary,
           width: "100%",
@@ -187,6 +197,20 @@ export function IdViewerModal({
         />
         Download {idFilename(doc)}
       </button>
+
+      {saveError && (
+        <p
+          role="alert"
+          style={{
+            fontSize: 12,
+            color: T.danger,
+            marginTop: 8,
+            lineHeight: 1.5,
+          }}
+        >
+          {saveError}
+        </p>
+      )}
 
       {actions}
     </Modal>

@@ -86,6 +86,15 @@ export function CardRequestsPage({ db }: { db: Db }) {
     setRelForm((f) => ({ ...f, qr }));
   }
 
+  /** Saves a submitted photo, saying either way whether it landed. */
+  function savePhoto(pet: Pet) {
+    if (!pet.photo) return;
+    downloadDataUrl(pet.photo, petPhotoFilename(pet)).then(
+      () => setToast("Photo saved."),
+      (err: Error) => setToast(err.message),
+    );
+  }
+
   function decline(id: number) {
     setPets((prev) =>
       prev.map((p) =>
@@ -123,9 +132,7 @@ export function CardRequestsPage({ db }: { db: Db }) {
           />
           <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
             <button
-              onClick={() =>
-                downloadDataUrl(zoomPhoto.photo!, petPhotoFilename(zoomPhoto))
-              }
+              onClick={() => savePhoto(zoomPhoto)}
               style={{ ...css.btnSecondary, flex: 1, justifyContent: "center" }}
             >
               Download photo
@@ -519,12 +526,7 @@ export function CardRequestsPage({ db }: { db: Db }) {
                     >
                       <button
                         type="button"
-                        onClick={() =>
-                          downloadDataUrl(
-                            relModal.photo!,
-                            petPhotoFilename(relModal),
-                          )
-                        }
+                        onClick={() => savePhoto(relModal)}
                         style={{
                           ...css.btnSecondary,
                           justifyContent: "center",
