@@ -32,6 +32,7 @@ export function AccountsPage({ db }: { db: Db }) {
   const [modal, setModal] = useState<"add" | "edit" | null>(null);
   const [form, setForm] = useState<Partial<Account>>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [viewId, setViewId] = useState<Registration | null>(null);
 
   const isSuperAdmin = user?.email === SUPER_ADMIN;
   const pendingRegs = registrations.filter((r) => r.status === "Pending");
@@ -203,6 +204,84 @@ export function AccountsPage({ db }: { db: Db }) {
     <div>
       {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
 
+      {viewId && (
+        <Modal
+          title={`ID — ${viewId.name}`}
+          onClose={() => setViewId(null)}
+          width={560}
+        >
+          <p style={{ fontSize: 12.5, color: T.muted, marginBottom: 12 }}>
+            {viewId.email} · {shortBranch(viewId.branch)} ·{" "}
+            {viewId.accountType === "Client" ? "Client" : viewId.role}
+          </p>
+
+          {String(viewId.idType || "").includes("pdf") ? (
+            <iframe
+              src={viewId.idImage ?? undefined}
+              title={`ID submitted by ${viewId.name}`}
+              style={{
+                width: "100%",
+                height: 420,
+                border: `1px solid ${T.border}`,
+                borderRadius: 10,
+                background: "#fff",
+              }}
+            />
+          ) : (
+            <img
+              src={viewId.idImage ?? undefined}
+              alt={`ID submitted by ${viewId.name}`}
+              style={{
+                width: "100%",
+                maxHeight: 460,
+                objectFit: "contain",
+                borderRadius: 10,
+                border: `1px solid ${T.border}`,
+                background: T.bg,
+              }}
+            />
+          )}
+
+          <p
+            style={{
+              fontSize: 12,
+              color: T.subtle,
+              marginTop: 10,
+              lineHeight: 1.5,
+            }}
+          >
+            Check the name and photo match the request before approving.
+          </p>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button
+              onClick={() => {
+                denyReg(viewId.id);
+                setViewId(null);
+              }}
+              style={{
+                ...css.btnSecondary,
+                flex: 1,
+                justifyContent: "center",
+                borderColor: "rgba(248,113,113,.4)",
+                color: T.danger,
+              }}
+            >
+              <Icon d={Icons.x} size={14} color={T.danger} stroke /> Deny
+            </button>
+            <button
+              onClick={() => {
+                approveReg(viewId);
+                setViewId(null);
+              }}
+              style={{ ...css.btnPrimary, flex: 1, justifyContent: "center" }}
+            >
+              <Icon d={Icons.check} size={14} color="#fff" stroke /> Approve
+            </button>
+          </div>
+        </Modal>
+      )}
+
       <PageHeader title="Accounts">
         <button
           onClick={() => {
@@ -310,20 +389,48 @@ export function AccountsPage({ db }: { db: Db }) {
                 flexWrap: "wrap",
               }}
             >
-              <div
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: `${T.warn}1f`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <Icon d={Icons.account} size={18} color={T.warn} stroke />
-              </div>
+              {r.idImage && !String(r.idType || "").includes("pdf") ? (
+                <button
+                  onClick={() => setViewId(r)}
+                  title="View submitted ID"
+                  style={{
+                    padding: 0,
+                    border: `1px solid ${T.warn}55`,
+                    borderRadius: 10,
+                    background: "none",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    lineHeight: 0,
+                  }}
+                >
+                  <img
+                    src={r.idImage}
+                    alt={`ID submitted by ${r.name}`}
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 9,
+                      objectFit: "cover",
+                      display: "block",
+                    }}
+                  />
+                </button>
+              ) : (
+                <div
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    background: `${T.warn}1f`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon d={Icons.account} size={18} color={T.warn} stroke />
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: 180 }}>
                 <p style={{ fontSize: 14, fontWeight: 700, color: T.text }}>
                   {r.name}
@@ -346,7 +453,8 @@ export function AccountsPage({ db }: { db: Db }) {
                   letterSpacing: ".05em",
                   borderRadius: 6,
                   padding: "4px 9px",
-                  color: r.accountType === "Client" ? T.info : T.accentDark,
+                  // accentDark is too close to the card behind it to read.
+                  color: r.accountType === "Client" ? T.info : T.accentLite,
                   background:
                     r.accountType === "Client"
                       ? `${T.info}15`
@@ -357,6 +465,38 @@ export function AccountsPage({ db }: { db: Db }) {
                 {r.accountType === "Client" ? "→ Clients" : "→ Accounts"}
               </span>
               <div style={{ display: "flex", gap: 8 }}>
+                {r.idImage ? (
+                  <button
+                    onClick={() => setViewId(r)}
+                    style={{
+                      ...css.btnSecondary,
+                      padding: "7px 14px",
+                      fontSize: 12.5,
+                      gap: 6,
+                    }}
+                  >
+                    <Icon d={Icons.eye} size={14} color={T.muted} stroke /> View
+                    ID
+                  </button>
+                ) : (
+                  <span
+                    title="This request was made before an ID was required."
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "7px 12px",
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: T.danger,
+                      background: `${T.danger}12`,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Icon d={Icons.alert} size={14} color={T.danger} stroke />
+                    No ID
+                  </span>
+                )}
                 <button
                   onClick={() => approveReg(r)}
                   style={{

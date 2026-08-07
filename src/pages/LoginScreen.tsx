@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Field, Icon, Icons } from "@/components";
 import { T, css } from "@/theme";
 import { SUPER_ADMIN } from "@/lib/constants";
 import { shortBranch } from "@/lib/branch";
+import { fileToDataUrl } from "@/lib/files";
 import type {
   AccountType,
   Admin,
@@ -44,8 +45,27 @@ export function LoginScreen({
   const [rContact, setRContact] = useState("");
   const [rType, setRType] = useState<AccountType>("Staff");
   const [rPw, setRPw] = useState("");
+  const [rId, setRId] = useState<{
+    data: string;
+    name: string;
+    type: string;
+  } | null>(null);
 
+  const idInput = useRef<HTMLInputElement>(null);
   const clientEmails = clients.map((c) => (c.email || "").toLowerCase());
+
+  async function pickId(file: File | undefined) {
+    if (!file) {
+      setRId(null);
+      return;
+    }
+    setRId({
+      data: await fileToDataUrl(file),
+      name: file.name,
+      type: file.type,
+    });
+    setErr("");
+  }
 
   function switchMode(m: "signin" | "register") {
     setMode(m);
@@ -122,6 +142,11 @@ export function LoginScreen({
       setOk("");
       return;
     }
+    if (!rId) {
+      setErr("Please attach a photo of your valid ID so we can verify you.");
+      setOk("");
+      return;
+    }
     if (!/^\S+@\S+\.\S+$/.test(mail)) {
       setErr("Please enter a valid email address.");
       setOk("");
@@ -155,6 +180,9 @@ export function LoginScreen({
       password: rPw,
       status: "Pending",
       requestedAt: new Date().toISOString(),
+      idImage: rId.data,
+      idName: rId.name,
+      idType: rId.type,
     });
 
     setOk(
@@ -170,6 +198,8 @@ export function LoginScreen({
     setRRole("Branch Staff");
     setRContact("");
     setRType("Staff");
+    setRId(null);
+    if (idInput.current) idInput.current.value = "";
   }
 
   const brandStat: Array<[string, string]> =
@@ -693,6 +723,107 @@ export function LoginScreen({
                 placeholder="Create a password"
                 style={css.input}
               />
+            </Field>
+
+            <Field
+              label="Valid ID"
+              hint="A government-issued ID. Staff check this before approving your account."
+            >
+              <input
+                ref={idInput}
+                type="file"
+                accept="image/*,.pdf"
+                onChange={(e) => void pickId(e.target.files?.[0])}
+                style={{ display: "none" }}
+              />
+
+              {rId ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 12px",
+                    borderRadius: 9,
+                    border: `1px solid ${T.accent}44`,
+                    background: `${T.accent}10`,
+                  }}
+                >
+                  {rId.type.includes("pdf") ? (
+                    <div
+                      style={{
+                        width: 46,
+                        height: 46,
+                        borderRadius: 8,
+                        background: `${T.accent}18`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Icon d={Icons.edit} size={18} color={T.accent} stroke />
+                    </div>
+                  ) : (
+                    <img
+                      src={rId.data}
+                      alt="Your ID"
+                      style={{
+                        width: 46,
+                        height: 46,
+                        borderRadius: 8,
+                        objectFit: "cover",
+                        flexShrink: 0,
+                        background: "#fff",
+                      }}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: T.text,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {rId.name}
+                    </p>
+                    <p style={{ fontSize: 11.5, color: T.muted }}>
+                      Attached to your request
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => idInput.current?.click()}
+                    style={{
+                      ...css.btnSecondary,
+                      padding: "5px 12px",
+                      fontSize: 12,
+                    }}
+                  >
+                    Replace
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => idInput.current?.click()}
+                  style={{
+                    ...css.btnSecondary,
+                    width: "100%",
+                    justifyContent: "center",
+                    gap: 8,
+                    padding: "13px 0",
+                    borderStyle: "dashed",
+                  }}
+                >
+                  <Icon d={Icons.camera} size={16} color={T.muted} stroke />
+                  Upload your ID
+                </button>
+              )}
             </Field>
 
             <button

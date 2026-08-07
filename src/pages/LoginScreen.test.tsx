@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LoginScreen } from "./LoginScreen";
 import { SUPER_ADMIN } from "@/lib/constants";
@@ -161,7 +161,23 @@ describe("request access", () => {
     await user.click(screen.getByText("Request access"));
   }
 
-  /** Fills every required field, including the branch select (first combobox). */
+  /**
+   * The ID input is hidden behind a styled button, so the file is applied
+   * directly rather than through a click.
+   */
+  async function attachId(name = "drivers-licence.png", type = "image/png") {
+    const input = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { files: [new File(["id-bytes"], name, { type })] },
+    });
+    await waitFor(() =>
+      expect(screen.getByText("Attached to your request")).toBeInTheDocument(),
+    );
+  }
+
+  /** Fills every required field, including the branch select and the ID. */
   async function fillRegistration(
     user: ReturnType<typeof userEvent.setup>,
     email: string,
@@ -179,6 +195,7 @@ describe("request access", () => {
       screen.getByPlaceholderText("Create a password"),
       "secret123",
     );
+    await attachId();
   }
 
   it("raises a Pending request that cannot sign in yet", async () => {
@@ -197,6 +214,54 @@ describe("request access", () => {
         role: "Branch Staff",
       }),
     );
+  });
+
+  it("attaches the submitted ID to the request", async () => {
+    const { onRegister, user } = setup();
+
+    await openRegister(user);
+    await fillRegistration(user, "new@example.com");
+    await user.click(screen.getByRole("button", { name: "Submit Request" }));
+
+    expect(onRegister).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idName: "drivers-licence.png",
+        idType: "image/png",
+        idImage: expect.stringMatching(/^data:image\/png/),
+      }),
+    );
+  });
+
+  it("refuses to submit without an ID", async () => {
+    const { onRegister, user } = setup();
+
+    await openRegister(user);
+    await user.type(
+      screen.getByPlaceholderText("e.g. Juan Dela Cruz"),
+      "Juan Dela Cruz",
+    );
+    await user.type(
+      screen.getByPlaceholderText("you@pethub.ph"),
+      "new@example.com",
+    );
+    await user.selectOptions(screen.getAllByRole("combobox")[0], BRANCH.name);
+    await user.type(
+      screen.getByPlaceholderText("Create a password"),
+      "secret123",
+    );
+    await user.click(screen.getByRole("button", { name: "Submit Request" }));
+
+    expect(onRegister).not.toHaveBeenCalled();
+    expect(screen.getByText(/photo of your valid ID/i)).toBeInTheDocument();
+  });
+
+  it("shows the chosen file so the applicant can confirm it", async () => {
+    const { user } = setup();
+
+    await openRegister(user);
+    await attachId("passport.jpg", "image/jpeg");
+
+    expect(screen.getByText("passport.jpg")).toBeInTheDocument();
   });
 
   it("records a client request as accountType Client", async () => {

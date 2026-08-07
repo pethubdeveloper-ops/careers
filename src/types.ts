@@ -145,6 +145,17 @@ export interface Registration {
   password: string;
   status: RegistrationStatus;
   requestedAt: string;
+  /**
+   * Photo or scan of the applicant's valid ID, attached at sign-up so an admin
+   * can verify who they are before approving.
+   *
+   * Held as a data URL by the local store. This is identity-document material:
+   * when a backend lands it belongs in access-controlled storage, not in the
+   * record itself. See the note in README.
+   */
+  idImage?: string | null;
+  idName?: string | null;
+  idType?: string | null;
 }
 
 export interface AuthUser {

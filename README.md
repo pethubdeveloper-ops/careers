@@ -90,9 +90,17 @@ anywhere else in the app.
 
 Other seams worth knowing about when a backend lands:
 
-- **Uploads** — receipts, pet photos, client avatar/cover and release QR images
-  all go through `fileToDataUrl` in `src/lib/files.ts` and are stored as data
-  URLs. Swap that for an upload to object storage; call sites only need the URL.
+- **Uploads** — receipts, pet photos, client avatar/cover, release QR images and
+  sign-up IDs all go through `fileToDataUrl` in `src/lib/files.ts` and are
+  stored as data URLs. Swap that for an upload to object storage; call sites
+  only need the URL.
+- **ID documents (handle with care)** — account requests carry a photo of the
+  applicant's government ID so staff can verify them before approving. Today it
+  sits in `localStorage` with everything else: fine for a prototype, not fine in
+  production, where it is readable by any script on the page and never expires.
+  Before real sign-ups, move `idImage` to access-controlled storage, serve it to
+  super-admins through short-lived signed URLs, and drop it once the request is
+  decided.
 - **"Today"** — `TODAY` in `src/lib/constants.ts` is pinned to `2026-07-01` so the
   seeded expiries and reminders look realistic. Swap for `new Date()`.
 - **Auth** — `LoginScreen` validates against the staff roster, client list and
