@@ -15,7 +15,7 @@ import {
 import { PetDetailsModal } from "./PetDetailsModal";
 import { T, css } from "@/theme";
 import { branchLabel } from "@/lib/branch";
-import { fileToDataUrl } from "@/lib/files";
+import { readDocumentFile } from "@/lib/files";
 import type { Client, Db, Pet } from "@/types";
 
 const SPECIES = [
@@ -83,11 +83,12 @@ export function ClientsPage({ db }: { db: Db }) {
   /** Attaches an ID to the client being added or edited. */
   async function pickId(file: File | undefined) {
     if (!file) return;
+    const doc = await readDocumentFile(file);
     const next = {
       ...form,
-      idImage: await fileToDataUrl(file),
-      idName: file.name,
-      idType: file.type,
+      idImage: doc.data,
+      idName: doc.name,
+      idType: doc.type,
     };
     setForm(next);
     if (modal === "edit" && next.name) {
@@ -190,7 +191,17 @@ export function ClientsPage({ db }: { db: Db }) {
       key: "id",
       label: "ID",
       sortable: false,
-      render: (r) => <IdThumbnail doc={r} size={34} onOpen={() => setViewId(r)} />,
+      render: (r) => (
+        <IdThumbnail
+          doc={r}
+          size={34}
+          onOpen={() => setViewId(r)}
+          onMissing={() => {
+            setForm({ ...r });
+            setModal("edit");
+          }}
+        />
+      ),
     },
     {
       key: "status",

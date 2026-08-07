@@ -3,7 +3,7 @@ import { Field, Icon, Icons } from "@/components";
 import { T, css } from "@/theme";
 import { SUPER_ADMIN } from "@/lib/constants";
 import { shortBranch } from "@/lib/branch";
-import { fileToDataUrl } from "@/lib/files";
+import { readDocumentFile } from "@/lib/files";
 import type {
   AccountType,
   Admin,
@@ -59,11 +59,7 @@ export function LoginScreen({
       setRId(null);
       return;
     }
-    setRId({
-      data: await fileToDataUrl(file),
-      name: file.name,
-      type: file.type,
-    });
+    setRId(await readDocumentFile(file));
     setErr("");
   }
 

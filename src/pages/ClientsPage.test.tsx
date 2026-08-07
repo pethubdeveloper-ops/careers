@@ -44,15 +44,19 @@ describe("ID in the client directory", () => {
     );
   });
 
-  it("marks a client who has no ID on file", () => {
-    setup({
+  it("says so in words when a client has no ID, and offers to add one", async () => {
+    const { user } = setup({
       clients: [makeClient({ id: 2, name: "No Doc", idImage: null })],
     });
 
-    expect(screen.getByTitle("No ID on file")).toBeInTheDocument();
+    expect(screen.getByText("No ID")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Open No Doc/ }),
     ).not.toBeInTheDocument();
+
+    // Clicking it opens that client's editor, where the upload lives.
+    await user.click(screen.getByRole("button", { name: /Add an ID for No Doc/ }));
+    expect(screen.getByRole("button", { name: "Upload ID" })).toBeInTheDocument();
   });
 
   it("surfaces the ID on file when editing a client", async () => {

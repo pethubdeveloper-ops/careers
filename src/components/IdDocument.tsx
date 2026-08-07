@@ -13,29 +13,53 @@ export function IdThumbnail({
   doc,
   size = 38,
   onOpen,
+  onMissing,
 }: {
   doc: IdHolder;
   size?: number;
   onOpen?: () => void;
+  /** Offered when there is no document — e.g. open the record to upload one. */
+  onMissing?: () => void;
 }) {
+  // No document: say so in words rather than showing an icon that looks like a
+  // picture failing to load, and offer the way to fix it where there is one.
   if (!doc.idImage) {
-    return (
+    const label = (
       <span
-        title="No ID on file"
         style={{
           display: "inline-flex",
           alignItems: "center",
-          justifyContent: "center",
-          width: size,
-          height: size,
-          borderRadius: 9,
+          gap: 6,
+          padding: "5px 10px",
+          borderRadius: 8,
+          fontSize: 12,
+          fontWeight: 600,
           background: `${T.danger}12`,
           color: T.danger,
-          flexShrink: 0,
+          whiteSpace: "nowrap",
         }}
       >
-        <Icon d={Icons.alert} size={size * 0.45} color={T.danger} stroke />
+        <Icon d={Icons.alert} size={13} color={T.danger} stroke />
+        No ID
       </span>
+    );
+
+    if (!onMissing) return <span title="No ID on file">{label}</span>;
+
+    return (
+      <button
+        onClick={onMissing}
+        aria-label={`Add an ID for ${doc.name}`}
+        title={`No ID on file — add one for ${doc.name}`}
+        style={{
+          padding: 0,
+          border: "none",
+          background: "none",
+          cursor: "pointer",
+        }}
+      >
+        {label}
+      </button>
     );
   }
 

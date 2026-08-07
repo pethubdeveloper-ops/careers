@@ -417,25 +417,7 @@ export function AccountsPage({ db }: { db: Db }) {
                     <Icon d={Icons.eye} size={14} color={T.muted} stroke /> View
                     ID
                   </button>
-                ) : (
-                  <span
-                    title="This request was made before an ID was required."
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "7px 12px",
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      color: T.danger,
-                      background: `${T.danger}12`,
-                      borderRadius: 8,
-                    }}
-                  >
-                    <Icon d={Icons.alert} size={14} color={T.danger} stroke />
-                    No ID
-                  </span>
-                )}
+                ) : null}
                 <button
                   onClick={() => approveReg(r)}
                   style={{
