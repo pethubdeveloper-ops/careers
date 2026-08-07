@@ -6,6 +6,7 @@ import {
   isNearExpiring,
   parseMembershipDate,
   pointsForPet,
+  renewedMembershipDate,
 } from "./loyalty";
 import { NEAR_EXPIRY_DAYS, TODAY } from "./constants";
 import { makePet, makeTxn, membershipDateExpiringIn } from "@/test/factories";
@@ -104,5 +105,39 @@ describe("pointsForPet", () => {
 
   it("is zero for a pet with no transactions", () => {
     expect(pointsForPet(999, txns)).toBe(0);
+  });
+});
+
+describe("renewedMembershipDate", () => {
+  it("extends a valid card from where its term ends, not from today", () => {
+    // Expires in 30 days, so a renewal today should push it to 30 days + a year.
+    const pet = makePet({ membershipDate: membershipDateExpiringIn(30) });
+    const renewed = renewedMembershipDate(pet);
+
+    expect(daysUntilExpiry({ ...pet, membershipDate: renewed })).toBe(
+      30 + 365,
+    );
+  });
+
+  it("starts a fresh term today once the card has lapsed", () => {
+    const pet = makePet({ membershipDate: membershipDateExpiringIn(-40) });
+    expect(renewedMembershipDate(pet)).toBe("07/01/2026");
+  });
+
+  it("treats a card expiring today as lapsed", () => {
+    const pet = makePet({ membershipDate: membershipDateExpiringIn(0) });
+    expect(renewedMembershipDate(pet)).toBe("07/01/2026");
+  });
+
+  it("gives a pet with no membership date a term starting today", () => {
+    expect(renewedMembershipDate(makePet({ membershipDate: "" }))).toBe(
+      "07/01/2026",
+    );
+  });
+
+  it("leaves the renewed card a full term long", () => {
+    const pet = makePet({ membershipDate: membershipDateExpiringIn(-40) });
+    const renewed = renewedMembershipDate(pet);
+    expect(daysUntilExpiry({ ...pet, membershipDate: renewed })).toBe(365);
   });
 });

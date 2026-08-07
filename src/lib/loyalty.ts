@@ -38,6 +38,28 @@ export function isNearExpiring(pet: Pet, today: string = TODAY): boolean {
   return days !== null && days > 0 && days <= NEAR_EXPIRY_DAYS;
 }
 
+/**
+ * The membership date a renewal writes, in the stored MM/DD/YYYY form.
+ *
+ * A card still in date has its term extended from where the old one ends, so
+ * renewing early does not cost the client the months they have left. A lapsed
+ * card starts a fresh term today. Both are done on the date parts rather than
+ * by Date arithmetic, which keeps the result off the timezone boundary.
+ */
+export function renewedMembershipDate(
+  pet: Pet,
+  today: string = TODAY,
+): string {
+  const parts = String(pet.membershipDate ?? "").split("/");
+  if (parts.length === 3 && !isExpired(pet, today)) {
+    const [month, day, year] = parts;
+    return `${month}/${day}/${Number(year) + CARD_VALIDITY_YEARS}`;
+  }
+
+  const [year, month, day] = today.split("-");
+  return `${month}/${day}/${year}`;
+}
+
 /** Net loyalty points a pet currently holds. */
 export function pointsForPet(petId: number, transactions: Transaction[]): number {
   return transactions

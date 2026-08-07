@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon, Icons, Modal, PageHeader, Toast } from "@/components";
 import { T, css } from "@/theme";
 import { CARD_VALIDITY_YEARS } from "@/lib/constants";
-import { parseMembershipDate } from "@/lib/loyalty";
+import { parseMembershipDate, renewedMembershipDate } from "@/lib/loyalty";
 import { downloadDataUrl, fileToDataUrl } from "@/lib/files";
 import type { Client, Db, Pet, Transaction } from "@/types";
 
@@ -294,6 +294,20 @@ export function TransactionScanner({ db }: { db: Db }) {
       prev.map((x) => (x.id === petId ? { ...x, photo } : x)),
     );
     setResult((r) => (r ? { ...r, pet: { ...r.pet, photo } } : r));
+  }
+
+  /** Extends a card's validity by another term. */
+  function renewCard(pet: Pet) {
+    const membershipDate = renewedMembershipDate(pet);
+    setLocalPets((prev) =>
+      prev.map((x) =>
+        x.id === pet.id ? { ...x, membershipDate, hasCard: true } : x,
+      ),
+    );
+    setResult((r) =>
+      r ? { ...r, pet: { ...r.pet, membershipDate, hasCard: true } } : r,
+    );
+    setToast(`Card renewed — valid to ${getExpiry(membershipDate)}.`);
   }
 
   function clearPetPhoto(petId: number) {
@@ -874,6 +888,30 @@ export function TransactionScanner({ db }: { db: Db }) {
                             stroke
                           />{" "}
                           Download Card
+                        </button>
+
+                        <button
+                          onClick={() => renewCard(p)}
+                          title={`Extend this card by ${CARD_VALIDITY_YEARS} year${
+                            CARD_VALIDITY_YEARS === 1 ? "" : "s"
+                          }`}
+                          style={{
+                            ...css.btnSecondary,
+                            justifyContent: "center",
+                            padding: "9px 0",
+                            fontSize: 13,
+                            gap: 7,
+                            color: T.accent,
+                            borderColor: `${T.accent}55`,
+                          }}
+                        >
+                          <Icon
+                            d="M3 12a9 9 0 0114.7-7M21 12a9 9 0 01-14.7 7M17 5h4V1M7 19H3v4"
+                            size={15}
+                            color={T.accent}
+                            stroke
+                          />
+                          Renew Card
                         </button>
 
                         <label style={{ cursor: "pointer" }}>

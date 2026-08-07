@@ -9,7 +9,7 @@ const CLIENT = makeClient({ id: 1 });
 const PET = makePet({ id: 10, clientId: 1, membershipNo: "PH-0001" });
 
 /** PH-0001 starts with a balance of 10 points. */
-function setup() {
+function setup(seed: Parameters<typeof renderWithDb>[1] = {}) {
   const view = renderWithDb((db) => <TransactionScanner db={db} />, {
     clients: [CLIENT],
     pets: [PET],
@@ -20,6 +20,7 @@ function setup() {
       role: "Administrator",
       isClient: false,
     },
+    ...seed,
   });
   return { ...view, user: userEvent.setup() };
 }
@@ -123,5 +124,40 @@ describe("redeeming points", () => {
       screen.getByRole("button", { name: /Save & Redeem Points/ }),
     );
     expect(screen.getByText(/10 points redeemed/)).toBeInTheDocument();
+  });
+});
+
+describe("renewing a card", () => {
+  it("starts a fresh term when the card has already lapsed", async () => {
+    // The seeded membership date is 05/26/2025, so the card expired in May.
+    const { user } = setup();
+    await lookUp(user, "PH-0001");
+    expect(screen.getAllByText(/May 26, 2026/).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /Renew Card/ }));
+
+    expect(screen.getAllByText(/July 1, 2027/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/May 26, 2026/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Card renewed/)).toBeInTheDocument();
+  });
+
+  it("extends a card that is still in date rather than restarting it", async () => {
+    const { user } = setup({
+      pets: [
+        makePet({
+          id: 10,
+          clientId: 1,
+          membershipNo: "PH-0001",
+          membershipDate: "12/24/2025",
+        }),
+      ],
+    });
+    await lookUp(user, "PH-0001");
+    expect(screen.getAllByText(/December 24, 2026/).length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /Renew Card/ }));
+
+    // A full year on from the old expiry, not from today.
+    expect(screen.getAllByText(/December 24, 2027/).length).toBeGreaterThan(0);
   });
 });
