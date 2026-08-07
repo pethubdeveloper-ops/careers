@@ -33,16 +33,22 @@ export function Field({
   );
 }
 
+/** Base stacking level for dialogs; nested ones sit above it. */
+export const MODAL_Z = 300;
+
 export function Modal({
   title,
   onClose,
   children,
   width = 480,
+  zIndex = MODAL_Z,
 }: {
   title: ReactNode;
   onClose: () => void;
   children: ReactNode;
   width?: number;
+  /** Raise above another dialog when one opens on top of it. */
+  zIndex?: number;
 }) {
   return (
     <div
@@ -50,7 +56,7 @@ export function Modal({
         position: "fixed",
         inset: 0,
         background: "rgba(6,32,23,.55)",
-        zIndex: 300,
+        zIndex,
         padding: 20,
         backdropFilter: "blur(6px)",
         // Deliberately not flex-centred: a dialog taller than the viewport

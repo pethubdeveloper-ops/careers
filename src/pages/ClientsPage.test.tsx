@@ -38,10 +38,9 @@ describe("ID in the client directory", () => {
     await user.click(screen.getByRole("button", { name: /Open Maria/ }));
 
     expect(screen.getByText("ID — Maria Santos")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Download/ })).toHaveAttribute(
-      "download",
-      "umid.png",
-    );
+    expect(
+      screen.getByRole("button", { name: /Download umid\.png/ }),
+    ).toBeInTheDocument();
   });
 
   it("says so in words when a client has no ID, and offers to add one", async () => {

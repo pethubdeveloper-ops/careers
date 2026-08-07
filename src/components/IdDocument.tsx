@@ -3,6 +3,7 @@ import { Icon } from "./Icon";
 import { Icons } from "./icons";
 import { Modal } from "./primitives";
 import { T, css } from "@/theme";
+import { downloadDataUrl } from "@/lib/files";
 import { idFilename, isPdfId as isPdf, type IdHolder } from "@/lib/idDocument";
 
 /**
@@ -167,14 +168,13 @@ export function IdViewerModal({
         />
       )}
 
-      <a
-        href={doc.idImage ?? undefined}
-        download={idFilename(doc)}
+      <button
+        type="button"
+        onClick={() => doc.idImage && downloadDataUrl(doc.idImage, idFilename(doc))}
         style={{
           ...css.btnSecondary,
           width: "100%",
           justifyContent: "center",
-          textDecoration: "none",
           marginTop: 14,
           gap: 8,
         }}
@@ -186,7 +186,7 @@ export function IdViewerModal({
           stroke
         />
         Download {idFilename(doc)}
-      </a>
+      </button>
 
       {actions}
     </Modal>

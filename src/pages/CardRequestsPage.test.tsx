@@ -123,11 +123,12 @@ describe("releasing a card", () => {
 
     expect(screen.getAllByAltText("Photo of Koohii").length).toBeGreaterThan(0);
     expect(
-      screen.getByRole("link", { name: /Download photo/ }),
-    ).toHaveAttribute("download", "PetPhoto-Koohii.jpg");
-    expect(
-      screen.getByRole("link", { name: /Open full size/ }),
-    ).toHaveAttribute("href", "data:image/jpeg;base64,cGV0");
+      screen.getByRole("button", { name: /Download photo/ }),
+    ).toBeInTheDocument();
+
+    // Enlarging happens in-app: browsers refuse to navigate to a data: URL.
+    await user.click(screen.getByRole("button", { name: /View larger/ }));
+    expect(screen.getByText("Photo — Koohii")).toBeInTheDocument();
   });
 
   it("warns when a request arrived without a photo", async () => {
@@ -136,7 +137,7 @@ describe("releasing a card", () => {
 
     expect(screen.getByText(/No photo submitted/i)).toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /Download photo/ }),
+      screen.queryByRole("button", { name: /Download photo/ }),
     ).not.toBeInTheDocument();
   });
 

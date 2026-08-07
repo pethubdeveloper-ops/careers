@@ -79,9 +79,9 @@ describe("reviewing a request's ID", () => {
     const { user } = setup();
     await user.click(screen.getByRole("button", { name: /View ID/ }));
 
-    const link = screen.getByRole("link", { name: /Download/ });
-    expect(link).toHaveAttribute("download", "drivers-licence.png");
-    expect(link).toHaveAttribute("href", ID_DATA);
+    expect(
+      screen.getByRole("button", { name: /Download drivers-licence\.png/ }),
+    ).toBeInTheDocument();
   });
 
   it("names the download after the applicant when the file had no name", async () => {
@@ -90,10 +90,9 @@ describe("reviewing a request's ID", () => {
     });
     await user.click(screen.getByRole("button", { name: /View ID/ }));
 
-    expect(screen.getByRole("link", { name: /Download/ })).toHaveAttribute(
-      "download",
-      "ID-Juan-Dela-Cruz.pdf",
-    );
+    expect(
+      screen.getByRole("button", { name: /Download ID-Juan-Dela-Cruz\.pdf/ }),
+    ).toBeInTheDocument();
   });
 
   it("flags a request that carries no ID rather than hiding it", () => {

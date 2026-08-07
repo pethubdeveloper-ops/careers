@@ -1,8 +1,16 @@
 import { useMemo, useRef, useState } from "react";
-import { Field, Icon, Icons, Modal, PageHeader, Toast } from "@/components";
+import {
+  Field,
+  Icon,
+  Icons,
+  MODAL_Z,
+  Modal,
+  PageHeader,
+  Toast,
+} from "@/components";
 import { T, css } from "@/theme";
 import { shortBranch } from "@/lib/branch";
-import { fileToDataUrl } from "@/lib/files";
+import { downloadDataUrl, fileToDataUrl } from "@/lib/files";
 import type { Db, Pet } from "@/types";
 
 interface ReleaseForm {
@@ -27,6 +35,7 @@ export function CardRequestsPage({ db }: { db: Db }) {
     qr: null,
   });
   const qrInput = useRef<HTMLInputElement>(null);
+  const [zoomPhoto, setZoomPhoto] = useState<Pet | null>(null);
 
   const clientOf = (id: number) => clients.find((c) => c.id === id);
 
@@ -91,6 +100,45 @@ export function CardRequestsPage({ db }: { db: Db }) {
   return (
     <div>
       {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
+
+      {zoomPhoto?.photo && (
+        <Modal
+          title={`Photo — ${zoomPhoto.name}`}
+          onClose={() => setZoomPhoto(null)}
+          width={620}
+          // Opens on top of the release dialog, so it must outrank it.
+          zIndex={MODAL_Z + 20}
+        >
+          <img
+            src={zoomPhoto.photo}
+            alt={`Photo of ${zoomPhoto.name}`}
+            style={{
+              width: "100%",
+              maxHeight: "68vh",
+              objectFit: "contain",
+              borderRadius: 12,
+              border: `1px solid ${T.border}`,
+              background: T.bg,
+            }}
+          />
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button
+              onClick={() =>
+                downloadDataUrl(zoomPhoto.photo!, petPhotoFilename(zoomPhoto))
+              }
+              style={{ ...css.btnSecondary, flex: 1, justifyContent: "center" }}
+            >
+              Download photo
+            </button>
+            <button
+              onClick={() => setZoomPhoto(null)}
+              style={{ ...css.btnPrimary, flex: 1, justifyContent: "center" }}
+            >
+              Close
+            </button>
+          </div>
+        </Modal>
+      )}
 
       <PageHeader title="Card Requests">
         <select
@@ -469,13 +517,17 @@ export function CardRequestsPage({ db }: { db: Db }) {
                         flex: 1,
                       }}
                     >
-                      <a
-                        href={relModal.photo}
-                        download={petPhotoFilename(relModal)}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          downloadDataUrl(
+                            relModal.photo!,
+                            petPhotoFilename(relModal),
+                          )
+                        }
                         style={{
                           ...css.btnSecondary,
                           justifyContent: "center",
-                          textDecoration: "none",
                           gap: 8,
                         }}
                       >
@@ -486,26 +538,19 @@ export function CardRequestsPage({ db }: { db: Db }) {
                           stroke
                         />
                         Download photo
-                      </a>
-                      <a
-                        href={relModal.photo}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setZoomPhoto(relModal)}
                         style={{
                           ...css.btnSecondary,
                           justifyContent: "center",
-                          textDecoration: "none",
                           gap: 8,
                         }}
                       >
-                        <Icon
-                          d={Icons.eye}
-                          size={15}
-                          color={T.muted}
-                          stroke
-                        />
-                        Open full size
-                      </a>
+                        <Icon d={Icons.eye} size={15} color={T.muted} stroke />
+                        View larger
+                      </button>
                     </div>
                   </div>
                 ) : (

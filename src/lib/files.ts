@@ -88,10 +88,36 @@ export function peso(amount: number): string {
   return `₱${Math.round(amount).toLocaleString()}`;
 }
 
-/** Triggers a client-side download of a data URL. */
+/** Converts a stored data URL back into a Blob. */
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, encoded] = dataUrl.split(",");
+  const type = header.match(/data:([^;]+)/)?.[1] ?? "application/octet-stream";
+
+  if (!header.includes(";base64")) {
+    return new Blob([decodeURIComponent(encoded ?? "")], { type });
+  }
+
+  const binary = atob(encoded ?? "");
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type });
+}
+
+/**
+ * Saves a stored data URL to disk.
+ *
+ * Goes via a Blob rather than putting the data URL straight on the link:
+ * browsers cap and in places refuse very long data: URLs, and an object URL
+ * downloads reliably at any size.
+ */
 export function downloadDataUrl(dataUrl: string, filename: string): void {
+  const url = URL.createObjectURL(dataUrlToBlob(dataUrl));
   const a = document.createElement("a");
-  a.href = dataUrl;
+  a.href = url;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+  // Give the download a tick to start before the URL is reclaimed.
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

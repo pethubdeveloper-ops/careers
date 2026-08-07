@@ -1,6 +1,6 @@
 export { Icon, type IconProps } from "./Icon";
 export { Icons } from "./icons";
-export { Field, Modal, Badge, Toast, PageHeader } from "./primitives";
+export { Field, Modal, Badge, Toast, PageHeader, MODAL_Z } from "./primitives";
 export { DataTable, type Column } from "./DataTable";
 export {
   DonutChart,
