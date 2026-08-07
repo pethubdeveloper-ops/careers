@@ -15,6 +15,16 @@ import { SUPER_ADMIN } from "@/lib/constants";
 import { branchLabel, shortBranch, vetsForBranch } from "@/lib/branch";
 import type { Account, Db, Registration } from "@/types";
 
+/**
+ * A saved ID keeps its original filename where there is one, and otherwise gets
+ * a name that identifies whose document it is.
+ */
+function idFilename(reg: Registration): string {
+  if (reg.idName) return reg.idName;
+  const ext = String(reg.idType || "").includes("pdf") ? "pdf" : "png";
+  return `ID-${reg.name.replace(/\s+/g, "-")}.${ext}`;
+}
+
 export function AccountsPage({ db }: { db: Db }) {
   const {
     accounts,
@@ -253,7 +263,28 @@ export function AccountsPage({ db }: { db: Db }) {
             Check the name and photo match the request before approving.
           </p>
 
-          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+          <a
+            href={viewId.idImage ?? undefined}
+            download={idFilename(viewId)}
+            style={{
+              ...css.btnSecondary,
+              width: "100%",
+              justifyContent: "center",
+              textDecoration: "none",
+              marginTop: 14,
+              gap: 8,
+            }}
+          >
+            <Icon
+              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+              size={15}
+              color={T.muted}
+              stroke
+            />
+            Download {idFilename(viewId)}
+          </a>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             <button
               onClick={() => {
                 denyReg(viewId.id);

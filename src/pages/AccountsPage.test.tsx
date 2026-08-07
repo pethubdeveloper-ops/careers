@@ -75,6 +75,27 @@ describe("reviewing a request's ID", () => {
     expect(screen.getByText(/request denied/i)).toBeInTheDocument();
   });
 
+  it("offers the ID as a download under its original filename", async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole("button", { name: /View ID/ }));
+
+    const link = screen.getByRole("link", { name: /Download/ });
+    expect(link).toHaveAttribute("download", "drivers-licence.png");
+    expect(link).toHaveAttribute("href", ID_DATA);
+  });
+
+  it("names the download after the applicant when the file had no name", async () => {
+    const { user } = setup({
+      registrations: [withId({ idName: null, idType: "application/pdf" })],
+    });
+    await user.click(screen.getByRole("button", { name: /View ID/ }));
+
+    expect(screen.getByRole("link", { name: /Download/ })).toHaveAttribute(
+      "download",
+      "ID-Juan-Dela-Cruz.pdf",
+    );
+  });
+
   it("flags a request that carries no ID rather than hiding it", () => {
     setup({ registrations: [makeRegistration({ idImage: null })] });
 
