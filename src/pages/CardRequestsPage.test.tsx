@@ -115,6 +115,36 @@ describe("releasing a card", () => {
     expect(screen.getByText(/Loyalty card released/)).toBeInTheDocument();
   });
 
+  it("shows the photo the owner submitted, ready to save for printing", async () => {
+    const { user } = setup({
+      pets: [pendingPet({ photo: "data:image/jpeg;base64,cGV0" })],
+    });
+    await user.click(screen.getByRole("button", { name: /Release Card/ }));
+
+    expect(screen.getAllByAltText("Photo of Koohii").length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("link", { name: /Download photo/ }),
+    ).toHaveAttribute("download", "PetPhoto-Koohii.jpg");
+    expect(
+      screen.getByRole("link", { name: /Open full size/ }),
+    ).toHaveAttribute("href", "data:image/jpeg;base64,cGV0");
+  });
+
+  it("warns when a request arrived without a photo", async () => {
+    const { user } = setup({ pets: [pendingPet({ photo: null })] });
+    await user.click(screen.getByRole("button", { name: /Release Card/ }));
+
+    expect(screen.getByText(/No photo submitted/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /Download photo/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the photo in the pending queue at a glance", () => {
+    setup({ pets: [pendingPet({ photo: "data:image/jpeg;base64,cGV0" })] });
+    expect(screen.getByAltText("Photo of Koohii")).toBeInTheDocument();
+  });
+
   it("shows the owner's details in the release dialog", async () => {
     const { user } = setup();
     await user.click(screen.getByRole("button", { name: /Release Card/ }));

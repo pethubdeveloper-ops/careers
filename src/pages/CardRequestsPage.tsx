@@ -10,6 +10,12 @@ interface ReleaseForm {
   qr: string | null;
 }
 
+/** Names a saved pet photo after the pet, so print files stay identifiable. */
+function petPhotoFilename(pet: Pet): string {
+  const ext = String(pet.photo || "").includes("image/png") ? "png" : "jpg";
+  return `PetPhoto-${pet.name.replace(/\s+/g, "-")}.${ext}`;
+}
+
 export function CardRequestsPage({ db }: { db: Db }) {
   const { pets, setPets, clients, branches, registrations } = db;
 
@@ -182,7 +188,20 @@ export function CardRequestsPage({ db }: { db: Db }) {
                     flexShrink: 0,
                   }}
                 >
-                  <Icon d={Icons.paw} size={19} color={T.accent} stroke />
+                  {p.photo ? (
+                    <img
+                      src={p.photo}
+                      alt={`Photo of ${p.name}`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 10,
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Icon d={Icons.paw} size={19} color={T.accent} stroke />
+                  )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: T.text }}>
@@ -386,7 +405,20 @@ export function CardRequestsPage({ db }: { db: Db }) {
                     flexShrink: 0,
                   }}
                 >
-                  <Icon d={Icons.paw} size={22} color={T.accent} stroke />
+                  {relModal.photo ? (
+                    <img
+                      src={relModal.photo}
+                      alt={`Photo of ${relModal.name}`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 11,
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Icon d={Icons.paw} size={22} color={T.accent} stroke />
+                  )}
                 </div>
                 <div>
                   <p style={{ fontSize: 15, fontWeight: 700, color: T.text }}>
@@ -398,6 +430,99 @@ export function CardRequestsPage({ db }: { db: Db }) {
                   </p>
                 </div>
               </div>
+
+              {/* The photo the owner submitted — this is what gets printed. */}
+              <Field
+                label="Pet Photo"
+                hint={
+                  relModal.photo
+                    ? "Submitted by the owner. Save it to send to the printer."
+                    : undefined
+                }
+              >
+                {relModal.photo ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                    }}
+                  >
+                    <img
+                      src={relModal.photo}
+                      alt={`Photo of ${relModal.name}`}
+                      style={{
+                        width: 96,
+                        height: 96,
+                        borderRadius: 12,
+                        objectFit: "cover",
+                        border: `1px solid ${T.border}`,
+                        background: "#fff",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        flex: 1,
+                      }}
+                    >
+                      <a
+                        href={relModal.photo}
+                        download={petPhotoFilename(relModal)}
+                        style={{
+                          ...css.btnSecondary,
+                          justifyContent: "center",
+                          textDecoration: "none",
+                          gap: 8,
+                        }}
+                      >
+                        <Icon
+                          d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+                          size={15}
+                          color={T.muted}
+                          stroke
+                        />
+                        Download photo
+                      </a>
+                      <a
+                        href={relModal.photo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          ...css.btnSecondary,
+                          justifyContent: "center",
+                          textDecoration: "none",
+                          gap: 8,
+                        }}
+                      >
+                        <Icon
+                          d={Icons.eye}
+                          size={15}
+                          color={T.muted}
+                          stroke
+                        />
+                        Open full size
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <p
+                    style={{
+                      fontSize: 12.5,
+                      color: T.danger,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 7,
+                    }}
+                  >
+                    <Icon d={Icons.alert} size={14} color={T.danger} stroke />
+                    No photo submitted — ask the owner before printing.
+                  </p>
+                )}
+              </Field>
 
               <div
                 style={{
@@ -442,7 +567,8 @@ export function CardRequestsPage({ db }: { db: Db }) {
                   }
                   placeholder="e.g. PH-0027"
                   style={css.input}
-                  autoFocus
+                  // No autoFocus: focusing a field below the fold scrolls the
+                  // dialog past the photo the reviewer is meant to check.
                 />
               </Field>
 

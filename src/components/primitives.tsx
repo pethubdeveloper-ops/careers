@@ -51,11 +51,11 @@ export function Modal({
         inset: 0,
         background: "rgba(6,32,23,.55)",
         zIndex: 300,
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
         padding: 20,
         backdropFilter: "blur(6px)",
+        // Deliberately not flex-centred: a dialog taller than the viewport
+        // loses its top to the auto-margin overflow, and the scrollbar cannot
+        // reach it. Block layout keeps the whole dialog scrollable.
         overflowY: "auto",
       }}
     >
@@ -64,7 +64,7 @@ export function Modal({
           ...css.card,
           width: "100%",
           maxWidth: width,
-          margin: "auto",
+          margin: "0 auto",
           padding: 28,
           background: "rgba(255,255,255,.14)",
           boxShadow:
