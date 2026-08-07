@@ -5,6 +5,8 @@ import {
   Field,
   Icon,
   Icons,
+  IdThumbnail,
+  IdViewerModal,
   Modal,
   PageHeader,
   Toast,
@@ -14,16 +16,6 @@ import { T, css } from "@/theme";
 import { SUPER_ADMIN } from "@/lib/constants";
 import { branchLabel, shortBranch, vetsForBranch } from "@/lib/branch";
 import type { Account, Db, Registration } from "@/types";
-
-/**
- * A saved ID keeps its original filename where there is one, and otherwise gets
- * a name that identifies whose document it is.
- */
-function idFilename(reg: Registration): string {
-  if (reg.idName) return reg.idName;
-  const ext = String(reg.idType || "").includes("pdf") ? "pdf" : "png";
-  return `ID-${reg.name.replace(/\s+/g, "-")}.${ext}`;
-}
 
 export function AccountsPage({ db }: { db: Db }) {
   const {
@@ -85,6 +77,12 @@ export function AccountsPage({ db }: { db: Db }) {
                 contact: reg.contact || "",
                 name: reg.name,
                 status: "Active",
+                // The ID they signed up with follows them into the directory,
+                // so staff can re-check it later without digging through
+                // reviewed requests.
+                idImage: reg.idImage ?? null,
+                idName: reg.idName ?? null,
+                idType: reg.idType ?? null,
               },
             ],
       );
@@ -215,102 +213,53 @@ export function AccountsPage({ db }: { db: Db }) {
       {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
 
       {viewId && (
-        <Modal
-          title={`ID — ${viewId.name}`}
+        <IdViewerModal
+          doc={viewId}
           onClose={() => setViewId(null)}
-          width={560}
-        >
-          <p style={{ fontSize: 12.5, color: T.muted, marginBottom: 12 }}>
-            {viewId.email} · {shortBranch(viewId.branch)} ·{" "}
-            {viewId.accountType === "Client" ? "Client" : viewId.role}
-          </p>
-
-          {String(viewId.idType || "").includes("pdf") ? (
-            <iframe
-              src={viewId.idImage ?? undefined}
-              title={`ID submitted by ${viewId.name}`}
-              style={{
-                width: "100%",
-                height: 420,
-                border: `1px solid ${T.border}`,
-                borderRadius: 10,
-                background: "#fff",
-              }}
-            />
-          ) : (
-            <img
-              src={viewId.idImage ?? undefined}
-              alt={`ID submitted by ${viewId.name}`}
-              style={{
-                width: "100%",
-                maxHeight: 460,
-                objectFit: "contain",
-                borderRadius: 10,
-                border: `1px solid ${T.border}`,
-                background: T.bg,
-              }}
-            />
-          )}
-
-          <p
-            style={{
-              fontSize: 12,
-              color: T.subtle,
-              marginTop: 10,
-              lineHeight: 1.5,
-            }}
-          >
-            Check the name and photo match the request before approving.
-          </p>
-
-          <a
-            href={viewId.idImage ?? undefined}
-            download={idFilename(viewId)}
-            style={{
-              ...css.btnSecondary,
-              width: "100%",
-              justifyContent: "center",
-              textDecoration: "none",
-              marginTop: 14,
-              gap: 8,
-            }}
-          >
-            <Icon
-              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
-              size={15}
-              color={T.muted}
-              stroke
-            />
-            Download {idFilename(viewId)}
-          </a>
-
-          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <button
-              onClick={() => {
-                denyReg(viewId.id);
-                setViewId(null);
-              }}
-              style={{
-                ...css.btnSecondary,
-                flex: 1,
-                justifyContent: "center",
-                borderColor: "rgba(248,113,113,.4)",
-                color: T.danger,
-              }}
-            >
-              <Icon d={Icons.x} size={14} color={T.danger} stroke /> Deny
-            </button>
-            <button
-              onClick={() => {
-                approveReg(viewId);
-                setViewId(null);
-              }}
-              style={{ ...css.btnPrimary, flex: 1, justifyContent: "center" }}
-            >
-              <Icon d={Icons.check} size={14} color="#fff" stroke /> Approve
-            </button>
-          </div>
-        </Modal>
+          subtitle={`${viewId.email} · ${shortBranch(viewId.branch)} · ${
+            viewId.accountType === "Client" ? "Client" : viewId.role
+          }`}
+          actions={
+            <>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: T.subtle,
+                  marginTop: 12,
+                  lineHeight: 1.5,
+                }}
+              >
+                Check the name and photo match the request before approving.
+              </p>
+              <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+                <button
+                  onClick={() => {
+                    denyReg(viewId.id);
+                    setViewId(null);
+                  }}
+                  style={{
+                    ...css.btnSecondary,
+                    flex: 1,
+                    justifyContent: "center",
+                    borderColor: "rgba(248,113,113,.4)",
+                    color: T.danger,
+                  }}
+                >
+                  <Icon d={Icons.x} size={14} color={T.danger} stroke /> Deny
+                </button>
+                <button
+                  onClick={() => {
+                    approveReg(viewId);
+                    setViewId(null);
+                  }}
+                  style={{ ...css.btnPrimary, flex: 1, justifyContent: "center" }}
+                >
+                  <Icon d={Icons.check} size={14} color="#fff" stroke /> Approve
+                </button>
+              </div>
+            </>
+          }
+        />
       )}
 
       <PageHeader title="Accounts">
@@ -420,48 +369,7 @@ export function AccountsPage({ db }: { db: Db }) {
                 flexWrap: "wrap",
               }}
             >
-              {r.idImage && !String(r.idType || "").includes("pdf") ? (
-                <button
-                  onClick={() => setViewId(r)}
-                  title="View submitted ID"
-                  style={{
-                    padding: 0,
-                    border: `1px solid ${T.warn}55`,
-                    borderRadius: 10,
-                    background: "none",
-                    cursor: "pointer",
-                    flexShrink: 0,
-                    lineHeight: 0,
-                  }}
-                >
-                  <img
-                    src={r.idImage}
-                    alt={`ID submitted by ${r.name}`}
-                    style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 9,
-                      objectFit: "cover",
-                      display: "block",
-                    }}
-                  />
-                </button>
-              ) : (
-                <div
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 10,
-                    background: `${T.warn}1f`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Icon d={Icons.account} size={18} color={T.warn} stroke />
-                </div>
-              )}
+              <IdThumbnail doc={r} onOpen={() => setViewId(r)} />
               <div style={{ flex: 1, minWidth: 180 }}>
                 <p style={{ fontSize: 14, fontWeight: 700, color: T.text }}>
                   {r.name}

@@ -46,7 +46,20 @@ export interface Admin {
   role: string;
 }
 
-export interface Client {
+/**
+ * A photo or scan of someone's valid ID.
+ *
+ * Held as a data URL by the local store. This is identity-document material:
+ * when a backend lands it belongs in access-controlled storage, not on the
+ * record itself. See the note in README.
+ */
+export interface IdDocumentFields {
+  idImage?: string | null;
+  idName?: string | null;
+  idType?: string | null;
+}
+
+export interface Client extends IdDocumentFields {
   id: number;
   branch: string;
   email: string;
@@ -134,7 +147,7 @@ export interface Appointment {
 }
 
 /** A pending request to join the portal, raised from the register screen. */
-export interface Registration {
+export interface Registration extends IdDocumentFields {
   id: number;
   name: string;
   email: string;
@@ -145,17 +158,6 @@ export interface Registration {
   password: string;
   status: RegistrationStatus;
   requestedAt: string;
-  /**
-   * Photo or scan of the applicant's valid ID, attached at sign-up so an admin
-   * can verify who they are before approving.
-   *
-   * Held as a data URL by the local store. This is identity-document material:
-   * when a backend lands it belongs in access-controlled storage, not in the
-   * record itself. See the note in README.
-   */
-  idImage?: string | null;
-  idName?: string | null;
-  idType?: string | null;
 }
 
 export interface AuthUser {

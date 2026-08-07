@@ -1,10 +1,12 @@
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import {
   Badge,
   DataTable,
   Field,
   Icon,
   Icons,
+  IdThumbnail,
+  IdViewerModal,
   Modal,
   PageHeader,
   Toast,
@@ -12,6 +14,8 @@ import {
 } from "@/components";
 import { PetDetailsModal } from "./PetDetailsModal";
 import { T, css } from "@/theme";
+import { branchLabel } from "@/lib/branch";
+import { fileToDataUrl } from "@/lib/files";
 import type { Client, Db, Pet } from "@/types";
 
 const SPECIES = [
@@ -72,7 +76,26 @@ export function ClientsPage({ db }: { db: Db }) {
   const [modal, setModal] = useState<"add" | "edit" | null>(null);
   const [form, setForm] = useState<ClientForm>({});
   const [petsFor, setPetsFor] = useState<Client | null>(null);
+  const [viewId, setViewId] = useState<Client | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const idInput = useRef<HTMLInputElement>(null);
+
+  /** Attaches an ID to the client being added or edited. */
+  async function pickId(file: File | undefined) {
+    if (!file) return;
+    const next = {
+      ...form,
+      idImage: await fileToDataUrl(file),
+      idName: file.name,
+      idType: file.type,
+    };
+    setForm(next);
+    if (modal === "edit" && next.name) {
+      setClients((p) =>
+        p.map((c) => (c.id === next.id ? ({ ...next } as Client) : c)),
+      );
+    }
+  }
 
   /** Edits save as you type; Add waits for the Register button. */
   function setField<K extends keyof Client>(key: K, val: Client[K]) {
@@ -97,6 +120,9 @@ export function ClientsPage({ db }: { db: Db }) {
         contact: form.contact || "",
         name: form.name,
         status: form.status || "Active",
+        idImage: form.idImage ?? null,
+        idName: form.idName ?? null,
+        idType: form.idType ?? null,
       };
       setClients((p) => [...p, newClient]);
 
@@ -160,6 +186,12 @@ export function ClientsPage({ db }: { db: Db }) {
     { key: "email", label: "Email", muted: true },
     { key: "contact", label: "Contact", muted: true },
     { key: "name", label: "Client Name" },
+    {
+      key: "id",
+      label: "ID",
+      sortable: false,
+      render: (r) => <IdThumbnail doc={r} size={34} onOpen={() => setViewId(r)} />,
+    },
     {
       key: "status",
       label: "Status",
@@ -337,6 +369,50 @@ export function ClientsPage({ db }: { db: Db }) {
               </select>
             </Field>
           </div>
+
+          <Field
+            label="Valid ID"
+            hint="Attached automatically when a client is approved from a sign-up request."
+          >
+            <input
+              ref={idInput}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => void pickId(e.target.files?.[0])}
+              style={{ display: "none" }}
+            />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <IdThumbnail
+                doc={{ ...form, name: form.name || "this client" }}
+                size={44}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: form.idImage ? T.text : T.subtle,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {form.idImage ? form.idName || "ID on file" : "No ID on file"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => idInput.current?.click()}
+                style={{
+                  ...css.btnSecondary,
+                  padding: "6px 14px",
+                  fontSize: 12.5,
+                }}
+              >
+                {form.idImage ? "Replace" : "Upload ID"}
+              </button>
+            </div>
+          </Field>
 
           {/* ── Pet registration ── */}
           <div
@@ -750,6 +826,14 @@ export function ClientsPage({ db }: { db: Db }) {
             )}
           </div>
         </Modal>
+      )}
+
+      {viewId && (
+        <IdViewerModal
+          doc={viewId}
+          onClose={() => setViewId(null)}
+          subtitle={`${viewId.email} · ${branchLabel(viewId.branch)}`}
+        />
       )}
 
       {petsFor && (
