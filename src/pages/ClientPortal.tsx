@@ -7,12 +7,13 @@ import {
   Modal,
   PageHeader,
   StatCard,
+  Toast,
 } from "@/components";
 import { BranchesPage } from "./BranchesPage";
 import { T, css } from "@/theme";
 import { TODAY } from "@/lib/constants";
 import { branchLabel } from "@/lib/branch";
-import { fileToDataUrl } from "@/lib/files";
+import { readDocumentFile } from "@/lib/files";
 import { pointsForPet } from "@/lib/loyalty";
 import type { AuthUser, Client, Db, Pet } from "@/types";
 
@@ -52,6 +53,10 @@ export function ClientPortal({
   const [page, setPage] = useState<ClientPage>("dashboard");
   const [petModal, setPetModal] = useState(false);
   const [petForm, setPetForm] = useState<Partial<Pet>>({});
+  const [availFor, setAvailFor] = useState<Pet | null>(null);
+  const [availPhoto, setAvailPhoto] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const availInput = useRef<HTMLInputElement>(null);
 
   const me: Client = clients.find((c) => c.id === user.clientId) || {
     id: user.clientId ?? -1,
@@ -97,22 +102,33 @@ export function ClientPortal({
     setPetForm({});
   }
 
+  async function pickAvailPhoto(file: File | undefined) {
+    if (!file) return;
+    setAvailPhoto((await readDocumentFile(file)).data);
+  }
+
   async function uploadPhoto(field: "cover" | "avatar", file: File | undefined) {
     if (!file) return;
-    const data = await fileToDataUrl(file);
+    const data = (await readDocumentFile(file)).data;
     setClients((p) =>
       p.map((c) => (c.id === user.clientId ? { ...c, [field]: data } : c)),
     );
   }
 
-  /** Raises a pending card request the admin releases from Card Requests. */
-  function availCard(petId: number) {
+  /**
+   * Raises a pending card request the admin releases from Card Requests.
+   *
+   * A photo is required: it goes on the loyalty card itself, so a request
+   * without one cannot be fulfilled.
+   */
+  function availCard(petId: number, photo: string) {
     setPets((prev) =>
       prev.map((p) => {
         if (p.id !== petId) return p;
         const seq = String(p.id).slice(-4);
         return {
           ...p,
+          photo,
           hasCard: true,
           membershipNo: p.membershipNo || `PH-${seq}`,
           membershipDate:
@@ -121,6 +137,9 @@ export function ClientPortal({
         };
       }),
     );
+    setAvailFor(null);
+    setAvailPhoto(null);
+    setToast("Loyalty card requested — your branch will prepare it.");
   }
 
   const PetCard = ({ p }: { p: Pet }) => (
@@ -146,7 +165,20 @@ export function ClientPortal({
             border: `1px solid ${T.accent}25`,
           }}
         >
-          <Icon d={Icons.paw} size={22} color={T.accent} stroke />
+          {p.photo ? (
+            <img
+              src={p.photo}
+              alt={p.name}
+              style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: 12,
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <Icon d={Icons.paw} size={22} color={T.accent} stroke />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 16, fontWeight: 800, color: T.text }}>
@@ -187,7 +219,10 @@ export function ClientPortal({
 
       {!p.hasCard && (
         <button
-          onClick={() => availCard(p.id)}
+          onClick={() => {
+            setAvailFor(p);
+            setAvailPhoto(p.photo ?? null);
+          }}
           style={{
             ...css.btnPrimary,
             width: "100%",
@@ -263,6 +298,116 @@ export function ClientPortal({
         background: T.bg,
       }}
     >
+      {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
+
+      {availFor && (
+        <Modal
+          title={`Avail Loyalty Card — ${availFor.name}`}
+          onClose={() => {
+            setAvailFor(null);
+            setAvailPhoto(null);
+          }}
+          width={460}
+        >
+          <p
+            style={{
+              fontSize: 13,
+              color: T.muted,
+              lineHeight: 1.6,
+              marginBottom: 16,
+            }}
+          >
+            Add a photo of {availFor.name} — it goes on the loyalty card, so
+            your branch needs it before printing.
+          </p>
+
+          <input
+            ref={availInput}
+            type="file"
+            accept="image/*"
+            onChange={(e) => void pickAvailPhoto(e.target.files?.[0])}
+            style={{ display: "none" }}
+          />
+
+          {availPhoto ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <img
+                src={availPhoto}
+                alt={availFor.name}
+                style={{
+                  width: 180,
+                  height: 180,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: `3px solid ${T.accent}`,
+                  background: "#fff",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => availInput.current?.click()}
+                style={{
+                  ...css.btnSecondary,
+                  padding: "7px 16px",
+                  fontSize: 12.5,
+                }}
+              >
+                Choose a different photo
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => availInput.current?.click()}
+              style={{
+                ...css.btnSecondary,
+                width: "100%",
+                justifyContent: "center",
+                gap: 8,
+                padding: "26px 0",
+                borderStyle: "dashed",
+              }}
+            >
+              <Icon d={Icons.camera} size={18} color={T.muted} stroke />
+              Upload a photo of {availFor.name}
+            </button>
+          )}
+
+          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+            <button
+              onClick={() => {
+                setAvailFor(null);
+                setAvailPhoto(null);
+              }}
+              style={{ ...css.btnSecondary, flex: 1, justifyContent: "center" }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => availPhoto && availCard(availFor.id, availPhoto)}
+              disabled={!availPhoto}
+              style={{
+                ...css.btnPrimary,
+                flex: 1,
+                justifyContent: "center",
+                gap: 7,
+                opacity: availPhoto ? 1 : 0.5,
+              }}
+            >
+              <Icon d={Icons.check} size={15} color="#fff" stroke />
+              Request Card
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {petModal && (
         <Modal title="Add a Pet" onClose={() => setPetModal(false)} width={520}>
           <div
