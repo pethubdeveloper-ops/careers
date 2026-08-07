@@ -22,19 +22,56 @@ npm run lint       # eslint (typescript-eslint + react-hooks)
 npm test           # vitest
 ```
 
+## Running it on Replit
+
+Replit imports straight from GitHub: **Create Repl → Import from GitHub**, and
+paste the repository URL. `claude/design-export-00ue79` is the only branch, so
+the import lands on it with nothing to check out.
+
+Then, in the Replit shell:
+
+```bash
+npm install
+npm run dev
+```
+
+Set the Run button to `npm run dev` if it does not pick that up on its own, and
+open the webview.
+
+No Replit-specific config is needed beyond what is already in `vite.config.ts`.
+The one thing that does not work out of the box on any hosted workspace is the
+dev server's host checking: Replit serves the app from a `*.replit.dev` address,
+and Vite answers a request for a hostname it does not recognise with
+
+```
+Blocked request. This host ("…") is not allowed.
+```
+
+`server.host` and `server.allowedHosts` in `vite.config.ts` handle that, and
+`server.hmr.clientPort` keeps hot reload working through the proxy's TLS
+termination. Both are scoped so local development is unaffected.
+
+To publish rather than just preview, `npm run build` writes a static bundle to
+`dist/`, which suits a static deployment — the app keeps all its data in
+`localStorage`, so there is no server to run.
+
 ## Tests
 
-`npm test` runs 57 tests across the rules that are easy to get wrong:
+`npm test` runs 120 tests across the rules that are easy to get wrong:
 
 - **`src/lib/loyalty.test.ts`** — expiry maths, including the boundaries: a card
   lapsing today counts as expired (not near-expiring), 60 days is inside the
-  near-expiring window and 61 is outside.
-- **`src/lib/branch.test.ts`**, **`files.test.ts`** — the two branch-name
-  shortenings and peso rounding.
+  near-expiring window and 61 is outside; plus renewal, which extends a valid
+  card from its own expiry and a lapsed one from today.
+- **`src/lib/branch.test.ts`**, **`files.test.ts`**, **`petQr.test.ts`** — the
+  two branch-name shortenings, peso rounding, saving a file through the host a
+  framed page is given, and what a pet's QR encodes.
+- **`src/components/primitives.test.tsx`** — that a dialog can always be left:
+  Escape, the backdrop, and one dialog at a time when they are stacked.
 - **`src/pages/LoginScreen.test.tsx`** — every auth outcome: staff, client,
   pending, denied, approved, unknown, plus the registration guards.
 - **`src/pages/TransactionScanner.test.tsx`** — lookup by membership number and
-  name, ₱300 = 1pt with flooring, and the over-redemption block.
+  name, ₱300 = 1pt with flooring, the over-redemption block, and renewal.
 - **`src/pages/CardRequestsPage.test.tsx`** — the avail → release → printed
   handoff, decline, and branch filtering.
 
