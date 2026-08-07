@@ -10,8 +10,7 @@ const escapeStack: (() => void)[] = [];
  * Closes a dialog when Escape is pressed.
  *
  * Every dialog needs a way out that does not depend on finding a button: a
- * dialog taller than the window, or one rendered inside a frame sized to its
- * content, can put its close button out of reach.
+ * dialog taller than the window can put its close button out of reach.
  */
 export function useCloseOnEscape(onClose: () => void) {
   // Callers pass a fresh arrow each render; keep the latest in a ref so the

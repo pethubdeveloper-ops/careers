@@ -1,8 +1,9 @@
 import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./Icon";
 import { Icons } from "./icons";
 import { T, css } from "@/theme";
-import { useCloseOnEscape } from "@/lib/useCloseOnEscape";
+import { useCloseOnEscape } from "@/lib/dialog";
 
 export function Field({
   label,
@@ -37,6 +38,64 @@ export function Field({
 /** Base stacking level for dialogs; nested ones sit above it. */
 export const MODAL_Z = 300;
 
+/**
+ * The backdrop every dialog sits on.
+ *
+ * Two things it deliberately does not do:
+ *
+ * It is not pinned to the viewport. A pinned overlay can only ever be as tall
+ * as the viewport, and the viewport is not always what the reader can see —
+ * the shared demo runs in a frame grown to the height of the whole app, where
+ * a pinned dialog taller than the frame is simply cut off with nothing to
+ * scroll. Growing with its content instead lets the page scroll, which works
+ * the same in a window and in a frame.
+ *
+ * And it renders into the body rather than in place. Anchored to whichever
+ * positioned ancestor happened to be above it, the overlay would start partway
+ * down the page and end up that much taller than it — enough, in a frame that
+ * resizes to its content, to make the page grow a little on every round.
+ */
+export function DialogOverlay({
+  onClose,
+  background,
+  blur,
+  zIndex = MODAL_Z,
+  children,
+}: {
+  onClose: () => void;
+  background: string;
+  blur: string;
+  zIndex?: number;
+  children: ReactNode;
+}) {
+  useCloseOnEscape(onClose);
+
+  return createPortal(
+    <div
+      // A click that starts and ends on the backdrop is a click past the
+      // dialog, so it dismisses. Anything inside the dialog is not.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      data-dialog-backdrop=""
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        minHeight: "100%",
+        background,
+        backdropFilter: blur,
+        zIndex,
+        padding: 20,
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
 export function Modal({
   title,
   onClose,
@@ -51,27 +110,12 @@ export function Modal({
   /** Raise above another dialog when one opens on top of it. */
   zIndex?: number;
 }) {
-  useCloseOnEscape(onClose);
-
   return (
-    <div
-      // A click that starts and ends on the backdrop is a click past the
-      // dialog, so it dismisses. Anything inside the card is not.
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(6,32,23,.55)",
-        zIndex,
-        padding: 20,
-        backdropFilter: "blur(6px)",
-        // Deliberately not flex-centred: a dialog taller than the viewport
-        // loses its top to the auto-margin overflow, and the scrollbar cannot
-        // reach it. Block layout keeps the whole dialog scrollable.
-        overflowY: "auto",
-      }}
+    <DialogOverlay
+      onClose={onClose}
+      zIndex={zIndex}
+      background="rgba(6,32,23,.55)"
+      blur="blur(6px)"
     >
       <div
         style={{
@@ -114,7 +158,7 @@ export function Modal({
         </div>
         {children}
       </div>
-    </div>
+    </DialogOverlay>
   );
 }
 

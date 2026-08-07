@@ -114,7 +114,7 @@ describe("leaving the dialog", () => {
 
   it("closes when the backdrop is clicked", async () => {
     const onClose = vi.fn();
-    const { container } = render(
+    render(
       <PetDetailsModal
         client={CLIENT}
         pets={[PET]}
@@ -123,7 +123,10 @@ describe("leaving the dialog", () => {
       />,
     );
 
-    await userEvent.click(container.firstElementChild!);
+    // The overlay renders into the body, not beside the caller.
+    await userEvent.click(
+      document.querySelector("[data-dialog-backdrop]")!,
+    );
     expect(onClose).toHaveBeenCalledOnce();
   });
 });
