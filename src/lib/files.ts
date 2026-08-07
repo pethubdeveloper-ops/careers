@@ -104,6 +104,27 @@ export function dataUrlToBlob(dataUrl: string): Blob {
 }
 
 /**
+ * Puts an image on the clipboard, ready to paste into a chat or a document.
+ *
+ * Rejects with something worth reading rather than failing quietly: the API
+ * needs a secure context, and a framed page can be denied it outright.
+ */
+export async function copyImageToClipboard(dataUrl: string): Promise<void> {
+  if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) {
+    throw new Error("This browser cannot copy images. Download it instead.");
+  }
+
+  const blob = dataUrlToBlob(dataUrl);
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({ [blob.type]: blob }),
+    ]);
+  } catch {
+    throw new Error("Copying was blocked here. Download it instead.");
+  }
+}
+
+/**
  * A host that saves files on the page's behalf.
  *
  * The shared demo runs inside the claude.ai artifact viewer, which frames the

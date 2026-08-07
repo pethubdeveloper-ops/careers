@@ -6,9 +6,15 @@ import {
   Icons,
   PetQRCode,
   Toast,
+  petQrFilename,
+  petQrPng,
 } from "@/components";
 import { T, css } from "@/theme";
-import { fileToDataUrl } from "@/lib/files";
+import {
+  copyImageToClipboard,
+  downloadDataUrl,
+  fileToDataUrl,
+} from "@/lib/files";
 import type { Client, Pet } from "@/types";
 
 const SPECIES = [
@@ -145,6 +151,24 @@ export function PetDetailsModal({
     if (!selectedPet) return;
     setEditForm({ ...selectedPet });
     setEditing(true);
+  }
+
+  async function saveQr(pet: Pet) {
+    try {
+      await downloadDataUrl(await petQrPng(pet), petQrFilename(pet));
+      setToast("QR code saved.");
+    } catch (err) {
+      setToast((err as Error).message);
+    }
+  }
+
+  async function copyQr(pet: Pet) {
+    try {
+      await copyImageToClipboard(await petQrPng(pet));
+      setToast("QR code copied.");
+    } catch (err) {
+      setToast((err as Error).message);
+    }
   }
 
   function deletePet(id: number) {
@@ -735,6 +759,63 @@ export function PetDetailsModal({
                       Scannable QR Code
                     </p>
                     <PetQRCode pet={selectedPet} size={130} />
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 6,
+                        marginTop: 10,
+                        // Matches the framed code above. Wrapping keeps the
+                        // pair inside this column instead of running under the
+                        // membership field beside it.
+                        width: 142,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => void saveQr(selectedPet)}
+                        title="Save the code as a PNG for printing"
+                        style={{
+                          ...inpSm,
+                          ...css.btnSecondary,
+                          flex: "1 1 60px",
+                          minWidth: 0,
+                          padding: "7px 6px",
+                          justifyContent: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <Icon
+                          d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+                          size={14}
+                          color={T.muted}
+                          stroke
+                        />
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void copyQr(selectedPet)}
+                        title="Copy the code to paste into a chat or document"
+                        style={{
+                          ...inpSm,
+                          ...css.btnSecondary,
+                          flex: "1 1 60px",
+                          minWidth: 0,
+                          padding: "7px 6px",
+                          justifyContent: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <Icon
+                          d="M8 4h10a2 2 0 012 2v10M16 8H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V10a2 2 0 00-2-2z"
+                          size={14}
+                          color={T.muted}
+                          stroke
+                        />
+                        Copy
+                      </button>
+                    </div>
                   </div>
                   <div style={{ flex: 1 }}>
                     <p

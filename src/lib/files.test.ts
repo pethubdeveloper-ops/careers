@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  copyImageToClipboard,
   dataUrlToBlob,
   downloadDataUrl,
   fileToDataUrl,
@@ -101,5 +102,53 @@ describe("downloadDataUrl", () => {
 
     expect(click).toHaveBeenCalledOnce();
     click.mockRestore();
+  });
+});
+
+describe("copyImageToClipboard", () => {
+  const QR = "data:image/png;base64,aGk=";
+  const realClipboard = navigator.clipboard;
+  const realItem = globalThis.ClipboardItem;
+
+  function withClipboard(write: ((items: unknown[]) => Promise<void>) | null) {
+    Object.defineProperty(navigator, "clipboard", {
+      value: write ? { write } : {},
+      configurable: true,
+    });
+    // jsdom has no ClipboardItem of its own.
+    (globalThis as { ClipboardItem?: unknown }).ClipboardItem = write
+      ? class {
+          constructor(public parts: Record<string, Blob>) {}
+        }
+      : undefined;
+  }
+
+  afterEach(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: realClipboard,
+      configurable: true,
+    });
+    (globalThis as { ClipboardItem?: unknown }).ClipboardItem = realItem;
+  });
+
+  it("writes the image to the clipboard", async () => {
+    const write = vi.fn().mockResolvedValue(undefined);
+    withClipboard(write);
+
+    await copyImageToClipboard(QR);
+
+    expect(write).toHaveBeenCalledOnce();
+    const [item] = write.mock.calls[0][0] as { parts: Record<string, Blob> }[];
+    expect(await item.parts["image/png"].text()).toBe("hi");
+  });
+
+  it("points at the download when the browser cannot copy images", async () => {
+    withClipboard(null);
+    await expect(copyImageToClipboard(QR)).rejects.toThrow(/Download it/i);
+  });
+
+  it("points at the download when copying is blocked", async () => {
+    withClipboard(vi.fn().mockRejectedValue(new Error("denied")));
+    await expect(copyImageToClipboard(QR)).rejects.toThrow(/blocked/i);
   });
 });
