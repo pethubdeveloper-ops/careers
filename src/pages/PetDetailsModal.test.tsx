@@ -95,3 +95,35 @@ describe("the pet's QR code", () => {
     expect(await screen.findByText("Could not save the file.")).toBeInTheDocument();
   });
 });
+
+describe("leaving the dialog", () => {
+  it("closes on Escape, which no amount of scrolling can hide", async () => {
+    const onClose = vi.fn();
+    render(
+      <PetDetailsModal
+        client={CLIENT}
+        pets={[PET]}
+        setPets={() => {}}
+        onClose={onClose}
+      />,
+    );
+
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("closes when the backdrop is clicked", async () => {
+    const onClose = vi.fn();
+    const { container } = render(
+      <PetDetailsModal
+        client={CLIENT}
+        pets={[PET]}
+        setPets={() => {}}
+        onClose={onClose}
+      />,
+    );
+
+    await userEvent.click(container.firstElementChild!);
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+});

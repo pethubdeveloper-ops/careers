@@ -1,6 +1,7 @@
 export { Icon, type IconProps } from "./Icon";
 export { Icons } from "./icons";
 export { Field, Modal, Badge, Toast, PageHeader, MODAL_Z } from "./primitives";
+export { useCloseOnEscape } from "@/lib/useCloseOnEscape";
 export { DataTable, type Column } from "./DataTable";
 export {
   DonutChart,

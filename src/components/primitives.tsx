@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Icon } from "./Icon";
 import { Icons } from "./icons";
 import { T, css } from "@/theme";
+import { useCloseOnEscape } from "@/lib/useCloseOnEscape";
 
 export function Field({
   label,
@@ -50,8 +51,15 @@ export function Modal({
   /** Raise above another dialog when one opens on top of it. */
   zIndex?: number;
 }) {
+  useCloseOnEscape(onClose);
+
   return (
     <div
+      // A click that starts and ends on the backdrop is a click past the
+      // dialog, so it dismisses. Anything inside the card is not.
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: "fixed",
         inset: 0,

@@ -4,10 +4,12 @@ import {
   Field,
   Icon,
   Icons,
+  MODAL_Z,
   PetQRCode,
   Toast,
   petQrFilename,
   petQrPng,
+  useCloseOnEscape,
 } from "@/components";
 import { T, css } from "@/theme";
 import {
@@ -229,18 +231,25 @@ export function PetDetailsModal({
     setSelectedPet((prev) => (prev ? { ...prev, membershipNo: val } : prev));
   }
 
+  useCloseOnEscape(onClose);
+
   return (
     <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: "fixed",
         inset: 0,
         background: "rgba(15,23,42,.55)",
-        zIndex: 300,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        zIndex: MODAL_Z,
         padding: 20,
         backdropFilter: "blur(2px)",
+        // Deliberately not flex-centred: a dialog taller than the viewport
+        // loses its top to the auto-margin overflow, taking the close button
+        // with it and stranding the reader inside. Block layout keeps the
+        // whole dialog, header first, reachable by scrolling.
+        overflowY: "auto",
       }}
     >
       {toast && <Toast msg={toast} onDone={() => setToast(null)} />}
@@ -250,7 +259,7 @@ export function PetDetailsModal({
           ...css.card,
           width: "100%",
           maxWidth: 720,
-          maxHeight: "92vh",
+          margin: "0 auto",
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 20px 60px rgba(0,0,0,.2)",
