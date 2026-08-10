@@ -46,9 +46,11 @@ are written against native primitives, using tokens ported into `src/theme.ts`.
 
 ## Storage
 
-`src/store/persist.ts` keeps records in AsyncStorage under the same
-`pethub_*` keys the web app uses in `localStorage`. They are **separate
-stores**: a phone and a browser do not see each other's data until a real
+`src/store/persist.ts` keeps records in AsyncStorage under `pethub_mobile_*`
+keys. The prefix earns its keep in the web build: that runs on the same origin
+as the web portal, and unprefixed keys would have the two overwrite each
+other's records — including the version marker, leaving both wiping the other's
+data on every launch. They are **separate stores**: a phone and a browser do not see each other's data until a real
 backend replaces `src/store/useDb.ts`. That file is the only thing that would
 need to change — screens take a `Db` and never learn where records came from.
 
@@ -75,6 +77,18 @@ npx eas build --platform android
 
 The iOS bundle identifier and Android package are both `ph.pethub.rewards`.
 Change them in `app.json` if the Pet Hub Shop app already claims that space.
+
+## Shareable demo
+
+```bash
+npx expo export --platform web
+node scripts/build-demo.mjs dist ../pethub-mobile-demo.html
+```
+
+Folds the web export into one self-contained HTML page, framed as a phone.
+Everything is inlined because the page is served under a CSP that blocks other
+hosts. The entry bundle has to run first — it defines the module registry the
+lazily-loaded barcode reader registers into.
 
 ## Verified
 

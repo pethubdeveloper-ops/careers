@@ -2,27 +2,34 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
 /**
- * Storage keys, matching the web app's so the two stay recognisable side by
- * side. They are not shared storage — a phone and a browser each keep their
- * own copy until a real backend lands.
+ * Storage keys, echoing the web app's names under this app's own prefix.
+ *
+ * The prefix is not decoration: on a phone the two apps could never meet, but
+ * the web build of this app runs on the same origin as the web portal, and
+ * unprefixed keys would have them overwrite each other's records — including
+ * the version marker, which would leave both wiping the other's data on every
+ * launch.
  */
+export const STORAGE_PREFIX = "pethub_mobile_";
+const PREFIX = STORAGE_PREFIX;
+
 export const STORAGE_KEYS = {
-  auth: "pethub_auth",
-  user: "pethub_user",
-  registrations: "pethub_regs",
-  branches: "pethub_branches",
-  branchVets: "pethub_branchvets",
-  accounts: "pethub_accounts",
-  clients: "pethub_clients",
-  pets: "pethub_pets",
-  promotions: "pethub_promotions",
-  appointments: "pethub_appointments",
-  transactions: "pethub_transactions",
+  auth: `${PREFIX}auth`,
+  user: `${PREFIX}user`,
+  registrations: `${PREFIX}regs`,
+  branches: `${PREFIX}branches`,
+  branchVets: `${PREFIX}branchvets`,
+  accounts: `${PREFIX}accounts`,
+  clients: `${PREFIX}clients`,
+  pets: `${PREFIX}pets`,
+  promotions: `${PREFIX}promotions`,
+  appointments: `${PREFIX}appointments`,
+  transactions: `${PREFIX}transactions`,
 } as const;
 
 /** Bump to discard stored records whose shape has changed. */
 export const DATA_VERSION = "1";
-const VERSION_KEY = "pethub_data_version";
+const VERSION_KEY = `${PREFIX}data_version`;
 
 /** The signed-in session survives a data reset; nothing else does. */
 const SESSION_KEYS: string[] = [STORAGE_KEYS.auth, STORAGE_KEYS.user];
@@ -39,7 +46,7 @@ export async function resetStaleData(): Promise<void> {
 
   const keys = await AsyncStorage.getAllKeys();
   const stale = keys.filter(
-    (k) => k.startsWith("pethub_") && k !== VERSION_KEY && !SESSION_KEYS.includes(k),
+    (k) => k.startsWith(PREFIX) && k !== VERSION_KEY && !SESSION_KEYS.includes(k),
   );
   // AsyncStorage v3 dropped the multi* helpers.
   await Promise.all(stale.map((k) => AsyncStorage.removeItem(k)));

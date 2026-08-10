@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { STORAGE_KEYS, resetStaleData, useStored } from "./persist";
+import { STORAGE_KEYS, STORAGE_PREFIX, resetStaleData, useStored } from "./persist";
 import {
   ACCOUNTS,
   APPOINTMENTS,
@@ -115,7 +115,7 @@ export async function clearAllData(): Promise<void> {
   const keys = await AsyncStorage.getAllKeys();
   await Promise.all(
     keys
-      .filter((k) => k.startsWith("pethub_"))
+      .filter((k) => k.startsWith(STORAGE_PREFIX))
       .map((k) => AsyncStorage.removeItem(k)),
   );
 }

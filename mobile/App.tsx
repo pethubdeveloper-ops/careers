@@ -40,12 +40,18 @@ const navTheme: Theme = {
 const Tabs = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-/** A short label under each tab, in place of an icon set. */
+/**
+ * The tab bar is labelled in words rather than icons — four rarely-used admin
+ * destinations are clearer named than guessed at from a glyph.
+ */
 function tabLabel(text: string) {
   return ({ color }: { color: string }) => (
-    <Text style={{ color, fontSize: 11, fontWeight: "600" }}>{text}</Text>
+    <Text style={{ color, fontSize: 12.5, fontWeight: "700" }}>{text}</Text>
   );
 }
+
+/** Without this React Navigation reserves space for an icon we do not have. */
+const noIcon = () => null;
 
 export default function App() {
   const db = useDb();
@@ -223,6 +229,9 @@ export default function App() {
             },
             tabBarActiveTintColor: T.accent,
             tabBarInactiveTintColor: T.subtle,
+            tabBarIcon: noIcon,
+            tabBarIconStyle: { display: "none" },
+            tabBarLabelPosition: "beside-icon",
           }}
         >
           <Tabs.Screen
