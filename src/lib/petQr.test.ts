@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { petQrFilename, petQrValue } from "./petQr";
+import { petQrFilename } from "./petQr";
+import { petQrValue } from "./loyalty";
 import { makePet } from "@/test/factories";
 
 describe("petQrValue", () => {

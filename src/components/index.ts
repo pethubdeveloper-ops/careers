@@ -18,7 +18,8 @@ export {
   type BarDatum,
 } from "./charts";
 export { PetQRCode } from "./PetQRCode";
-export { petQrFilename, petQrPng, petQrValue } from "@/lib/petQr";
+export { petQrFilename, petQrPng } from "@/lib/petQr";
+export { petQrValue } from "@/lib/loyalty";
 export { IdThumbnail, IdViewerModal } from "./IdDocument";
 export { idFilename, isPdfId, type IdHolder } from "@/lib/idDocument";
 export { StatCard } from "./StatCard";

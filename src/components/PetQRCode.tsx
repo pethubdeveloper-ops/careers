@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { drawPetQr, petQrValue } from "@/lib/petQr";
+import { drawPetQr } from "@/lib/petQr";
+import { petQrValue } from "@/lib/loyalty";
 import type { Pet } from "@/types";
 
 /**

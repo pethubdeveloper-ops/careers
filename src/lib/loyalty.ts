@@ -1,6 +1,17 @@
 import { CARD_VALIDITY_YEARS, NEAR_EXPIRY_DAYS, TODAY } from "./constants";
 import type { Pet, Transaction } from "@/types";
 
+/**
+ * The value a pet's QR code encodes. The Loyalty Scanner looks pets up by
+ * membership no. or id, so it is whichever of those is available.
+ *
+ * Lives here rather than beside the drawing code because the mobile app has to
+ * agree with the web app on it, and cannot import a canvas renderer.
+ */
+export function petQrValue(pet: Pet | null | undefined): string {
+  return pet?.membershipNo || String(pet?.id ?? "");
+}
+
 /** Parses the prototype's MM/DD/YYYY membership dates. */
 export function parseMembershipDate(value: string | undefined): Date | null {
   if (!value) return null;

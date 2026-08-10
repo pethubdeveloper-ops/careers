@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Pet Hub Rewards",
+    "slug": "pethub-rewards",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "scheme": "pethub-rewards",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0f3d2e",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f3d2e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ph.pethub.rewards",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Pet Hub Rewards uses the camera to scan the QR code on a pet's loyalty card at the counter.",
+        "NSPhotoLibraryUsageDescription": "Pet Hub Rewards needs a photo of your pet for the loyalty card your branch prints."
+      }
+    },
+    "android": {
+      "package": "ph.pethub.rewards",
+      "adaptiveIcon": {
+        "backgroundColor": "#0f3d2e",
+        "foregroundImage": "./assets/logo.png"
+      },
+      "permissions": ["android.permission.CAMERA"],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/logo.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Pet Hub Rewards uses the camera to scan the QR code on a pet's loyalty card at the counter."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pet Hub Rewards needs a photo of your pet for the loyalty card your branch prints."
+        }
+      ]
+    ]
+  }
+}

@@ -1,4 +1,5 @@
 import QR from "qrcode";
+import { petQrValue } from "./loyalty";
 import type { Pet } from "@/types";
 
 /**
@@ -9,14 +10,6 @@ import type { Pet } from "@/types";
  * need, which is what makes the overlay safe.
  */
 const LOGO_RATIO = 0.24;
-
-/**
- * The value a pet's code encodes. The Loyalty Scanner looks pets up by
- * membership no. or id, so it is whichever of those is available.
- */
-export function petQrValue(pet: Pet | null | undefined): string {
-  return pet?.membershipNo || String(pet?.id ?? "");
-}
 
 function roundedRect(
   ctx: CanvasRenderingContext2D,
